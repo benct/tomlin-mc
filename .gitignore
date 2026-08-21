@@ -9,6 +9,7 @@
 
 # production
 /build
+/files
 
 # testing
 /coverage

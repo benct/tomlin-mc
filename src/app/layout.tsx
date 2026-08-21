@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import type { PropsWithChildren } from 'react';
 import { GitHubLink } from '@/components/GitHubLink';
+import { SideNav } from '@/components/SideNav';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const metadata: Metadata = {
@@ -33,8 +34,11 @@ const RootLayout = ({ children }: Readonly<PropsWithChildren>) => (
                 <GitHubLink />
                 <ThemeToggle />
             </div>
-            <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:py-16">{children}</main>
-            <footer className="markdown-body mx-auto max-w-3xl px-4 pb-10 text-center text-sm text-(--color-fg-muted) sm:px-6">
+            <div className="mx-auto flex max-w-5xl flex-col-reverse gap-8 px-4 py-10 sm:px-6 lg:flex-row-reverse lg:py-16">
+                <SideNav />
+                <main className="min-w-0 flex-1">{children}</main>
+            </div>
+            <footer className="markdown-body mx-auto max-w-5xl px-4 pb-10 text-center text-sm text-(--color-fg-muted) sm:px-6">
                 <hr />
                 <p className="mb-2">Not affiliated with Mojang or Microsoft. Minecraft is a trademark of Mojang Synergies AB.</p>
                 <p>Ben Tomlin © {CURRENT_YEAR}</p>

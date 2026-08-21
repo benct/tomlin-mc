@@ -79,7 +79,6 @@ hand-implemented with no runtime dependencies:
   it via `data-theme` on `<html>`.
 - `src/app/layout.tsx` — inlines a small pre-paint script that applies the saved
   theme before first render to avoid a light/dark flash.
-- `src/components/GitHubLink.tsx` — a floating link to the source repository.
 - `src/app/globals.css` — GitHub Primer color tokens and Markdown typography.
   `system` follows `prefers-color-scheme`; explicit `light`/`dark` are driven by
   the `data-theme` attribute.

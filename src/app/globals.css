@@ -144,6 +144,25 @@ body {
     background-color: var(--color-code-bg);
 }
 
+.markdown-body pre {
+    padding: 16px;
+    margin-bottom: 16px;
+    max-height: 320px;
+    overflow: auto;
+    font-size: 85%;
+    line-height: 1.45;
+    border-radius: 6px;
+    background-color: var(--color-canvas-subtle);
+}
+
+.markdown-body pre code {
+    padding: 0;
+    font-size: 100%;
+    background-color: transparent;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
 .markdown-body hr {
     height: 1px;
     border: 0;
