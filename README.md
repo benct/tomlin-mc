@@ -30,7 +30,6 @@ Configure the target server via environment variables in `.env.local`:
 MC_SERVER_ADDRESS=play.yourserver.net    # required — server hostname or IP
 MC_SERVER_PORT=25565                     # optional — Server List Ping (TCP) port, default 25565
 MC_QUERY_PORT=25565                      # optional — Query (UDP) port, default 25565
-WEB_SERVER_URL=https://mc.yourserver.net # optional — host for this site, the live-map and download links
 RESOURCE_PACK_URL=https://.../pack.zip   # optional — direct URL to the client resource pack download
 ```
 

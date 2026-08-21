@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-
-const RESOURCE_PACK_URL = process.env.RESOURCE_PACK_URL;
+import { resourcePackUrl } from '@/lib/env';
 
 const RESOURCE_PACK_CONTENTS =
     'GUI:\n- Dark UI\n- Numbered Hotbar\n\n' +
@@ -107,10 +106,10 @@ const Mods = () => (
                 — a higher-resolution pack that doubles the vanilla textures while staying true to the original look.
             </li>
         </ul>
-        {RESOURCE_PACK_URL && (
+        {resourcePackUrl && (
             <>
                 <p>
-                    <a href={RESOURCE_PACK_URL} download>
+                    <a href={resourcePackUrl} download>
                         Click here to download
                     </a>{' '}
                     our curated selection from VanillaTweaks. Includes the following packs:

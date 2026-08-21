@@ -1,12 +1,6 @@
 import Link from 'next/link';
 import { CopyField } from '@/components/CopyField';
-
-const RESOURCE_PACK_URL = process.env.RESOURCE_PACK_URL;
-
-const DEFAULT_PORT = '25565';
-const SERVER_ADDRESS = process.env.MC_SERVER_ADDRESS;
-const SERVER_PORT = process.env.MC_SERVER_PORT ?? DEFAULT_PORT;
-const CONNECT_ADDRESS = SERVER_ADDRESS ? (SERVER_PORT === DEFAULT_PORT ? SERVER_ADDRESS : `${SERVER_ADDRESS}:${SERVER_PORT}`) : null;
+import { connectAddress, resourcePackUrl } from '@/lib/env';
 
 const iconProps = {
     width: 16,
@@ -74,12 +68,12 @@ export const SideNav = () => (
             </Link>
         </nav>
 
-        {CONNECT_ADDRESS && <CopyField content={CONNECT_ADDRESS} />}
+        {connectAddress && <CopyField content={connectAddress} />}
 
-        {RESOURCE_PACK_URL && (
+        {resourcePackUrl && (
             <div className="space-y-2">
                 <a
-                    href={RESOURCE_PACK_URL}
+                    href={resourcePackUrl}
                     download
                     className="flex items-center gap-2 rounded-md border border-(--color-border) bg-(--color-canvas-subtle) px-5 py-2 text-sm font-medium text-(--color-fg) no-underline transition-colors hover:bg-(--color-neutral-muted)">
                     <DownloadIcon />

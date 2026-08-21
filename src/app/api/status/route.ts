@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { queryPort, serverAddress, serverPort } from '@/lib/env';
 import { flattenMotd } from '@/lib/flattenMotd';
 import { pingServer } from '@/lib/mcping';
 import { queryServer } from '@/lib/mcquery';
@@ -11,11 +12,6 @@ import type { ServerStatus } from '@/lib/types';
  * player list; SLP provides the server icon, which Query lacks.
  */
 
-const SERVER_ADDRESS = process.env.MC_SERVER_ADDRESS;
-const DEFAULT_PORT = 25565;
-const SERVER_PORT = Number(process.env.MC_SERVER_PORT ?? DEFAULT_PORT);
-const QUERY_PORT = Number(process.env.MC_QUERY_PORT ?? DEFAULT_PORT);
-
 // Don't cache at the framework level; SWR handles client-side refresh cadence.
 export const dynamic = 'force-dynamic';
 
@@ -24,30 +20,30 @@ const settled = <T>(result: PromiseSettledResult<T>): T | null => (result.status
 export async function GET() {
     const fetchedAt = Date.now();
 
-    if (!SERVER_ADDRESS) {
+    if (!serverAddress) {
         console.log('[Error] MC_SERVER_ADDRESS is not set');
         return NextResponse.json({ error: 'Server address is not configured.' }, { status: 500 });
     }
 
     const [pingResult, queryResult] = await Promise.allSettled([
-        pingServer(SERVER_ADDRESS, SERVER_PORT),
-        queryServer(SERVER_ADDRESS, QUERY_PORT),
+        pingServer(serverAddress, serverPort),
+        queryServer(serverAddress, queryPort),
     ]);
 
     const ping = settled(pingResult);
     const query = settled(queryResult);
 
     if (pingResult.status === 'rejected') {
-        console.log(`[Error] SLP ${SERVER_ADDRESS}:${SERVER_PORT}: ${String(pingResult.reason)}`);
+        console.log(`[Error] SLP ${serverAddress}:${serverPort}: ${String(pingResult.reason)}`);
     }
     if (queryResult.status === 'rejected') {
-        console.log(`[Error] Query ${SERVER_ADDRESS}:${QUERY_PORT}: ${String(queryResult.reason)}`);
+        console.log(`[Error] Query ${serverAddress}:${queryPort}: ${String(queryResult.reason)}`);
     }
 
     if (!ping && !query) {
         const offline: ServerStatus = {
-            hostname: SERVER_ADDRESS,
-            port: SERVER_PORT,
+            hostname: serverAddress,
+            port: serverPort,
             online: false,
             version: null,
             gametype: null,
@@ -60,8 +56,8 @@ export async function GET() {
     }
 
     const status: ServerStatus = {
-        hostname: SERVER_ADDRESS,
-        port: query?.hostport ?? SERVER_PORT,
+        hostname: serverAddress,
+        port: query?.hostport ?? serverPort,
         online: true,
         version: query?.version ?? ping?.version?.name ?? null,
         gametype: query?.gametype ?? null,
