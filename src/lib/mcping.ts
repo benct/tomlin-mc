@@ -105,7 +105,7 @@ export const pingServer = (host: string, port = 25565, timeoutMs = 5000): Promis
             socket.write(Buffer.concat([handshake, request]));
         });
 
-        socket.on('data', (data) => {
+        socket.on('data', (data: Buffer) => {
             chunks = Buffer.concat([chunks, data]);
 
             // First, read the overall packet length prefix.
