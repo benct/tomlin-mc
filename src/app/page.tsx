@@ -8,22 +8,31 @@ const Home = () => (
             plays exactly like unmodified Minecraft.
         </p>
         <p>
-            The only additions are <strong>server-side performance mods</strong>, loaded with <a href="https://fabricmc.net/">Fabric</a>.
-            They make the world run faster and lighter without touching how the game plays, so you can join with a completely unmodified
+            The only additions are <strong>server-side performance mods</strong>, loaded with{' '}
+            <a href="https://fabricmc.net/" target="_blank" rel="noopener noreferrer">
+                Fabric
+            </a>
+            . They make the world run faster and lighter without touching how the game plays, so you can join with a completely unmodified
             client:
         </p>
         <ul>
             <li>
-                <a href="https://modrinth.com/mod/lithium">Lithium</a> — optimizes game physics, mob AI, and block ticking for higher, more
-                stable tick rates.
+                <a href="https://modrinth.com/mod/lithium" target="_blank" rel="noopener noreferrer">
+                    Lithium
+                </a>{' '}
+                — optimizes game physics, mob AI, and block ticking for higher, more stable tick rates.
             </li>
             <li>
-                <a href="https://modrinth.com/mod/ferrite-core">FerriteCore</a> — cuts the server's memory usage so it stays responsive
-                under load.
+                <a href="https://modrinth.com/mod/ferrite-core" target="_blank" rel="noopener noreferrer">
+                    FerriteCore
+                </a>{' '}
+                — cuts the server's memory usage so it stays responsive under load.
             </li>
             <li>
-                <a href="https://modrinth.com/mod/krypton">Krypton</a> — streamlines the networking stack for lower latency and smoother
-                connections.
+                <a href="https://modrinth.com/mod/krypton" target="_blank" rel="noopener noreferrer">
+                    Krypton
+                </a>{' '}
+                — streamlines the networking stack for lower latency and smoother connections.
             </li>
         </ul>
 
