@@ -49,6 +49,12 @@ const Mods = () => (
                 — the mod loader everything else runs on. Install this first.
             </li>
             <li>
+                <a href="https://modrinth.com/mod/fabric-api" target="_blank" rel="noopener noreferrer">
+                    Fabric API
+                </a>{' '}
+                — the core library most Fabric mods depend on. Install it alongside Fabric before adding anything else.
+            </li>
+            <li>
                 <a href="https://modrinth.com/mod/sodium" target="_blank" rel="noopener noreferrer">
                     Sodium
                 </a>{' '}
@@ -59,6 +65,12 @@ const Mods = () => (
                     Lithium
                 </a>{' '}
                 — general game-logic optimizations for smoother performance.
+            </li>
+            <li>
+                <a href="https://modrinth.com/mod/continuity" target="_blank" rel="noopener noreferrer">
+                    Continuity
+                </a>{' '}
+                — adds connected textures, so blocks like glass and bookshelves blend seamlessly.
             </li>
             <li>
                 <a href="https://modrinth.com/mod/iris" target="_blank" rel="noopener noreferrer">
