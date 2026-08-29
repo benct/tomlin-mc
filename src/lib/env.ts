@@ -28,5 +28,13 @@ export const connectAddress: string | null = serverAddress
         : `${serverAddress}:${serverPort}`
     : null;
 
+/**
+ * Directory holding the server's player data, or `undefined` when unconfigured. Expected layout:
+ *     <dir>/usercache.json           — the player roster
+ *     <dir>/stats/<uuid>.json        — one stats file per player
+ *     <dir>/advancements/<uuid>.json — one advancements file per player
+ */
+export const statsDir = process.env.MC_STATS_DIR;
+
 /** Direct URL to the downloadable client resource pack. */
 export const resourcePackUrl = process.env.RESOURCE_PACK_URL;

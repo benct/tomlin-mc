@@ -30,11 +30,21 @@ Configure the target server via environment variables in `.env.local`:
 MC_SERVER_ADDRESS=play.yourserver.net    # required — server hostname or IP
 MC_SERVER_PORT=25565                     # optional — Server List Ping (TCP) port, default 25565
 MC_QUERY_PORT=25565                      # optional — Query (UDP) port, default 25565
+MC_STATS_DIR=/server/stats               # optional — player data directory for the stats page
 RESOURCE_PACK_URL=https://.../pack.zip   # optional — direct URL to the client resource pack download
 ```
 
 `MC_SERVER_ADDRESS` is required; if it is unset the status API responds with a
 `500` and a configuration error. The two port variables default to `25565`.
+
+`MC_STATS_DIR` points at the server's player data. Without it the stats page just
+says so. It expects the following layout:
+
+```
+<MC_STATS_DIR>/usercache.json           # the roster: [{ "uuid": ..., "name": ... }]
+<MC_STATS_DIR>/stats/<uuid>.json        # one stats file per player
+<MC_STATS_DIR>/advancements/<uuid>.json # one advancements file per player
+```
 
 To get the full online player list, enable the Query protocol on the server by
 setting the following in `server.properties`:
@@ -70,6 +80,20 @@ hand-implemented with no runtime dependencies:
 - `src/app/page.tsx` — the static page content: server info, performance mods,
   a live-map link, rules, and recommended client-side mods, shaders, and
   resource packs.
+
+The player stats page is read from disk rather than over the network:
+
+- `src/lib/stats.ts` — reads the roster, then each listed player's stats and
+  advancements files, and flattens them into ranked top lists. Playtime is in
+  ticks, travel in centimetres, and damage in tenths of a health point, so
+  `src/lib/formatStats.ts` converts each to something readable. Advancement
+  counts exclude `minecraft:recipes/*`, which the server grants automatically.
+  Stats with no scores on the server (e.g. `player_kills` where nobody has
+  PvP'd) are dropped rather than shown as an all-zero board.
+- `src/app/stats/page.tsx` — a server component rendering the server-wide
+  totals, the leaderboards, and a per-player table. It sets `revalidate = 300`,
+  so the files are re-read at most once every 5 minutes instead of being baked
+  in at build time.
 
 ## Theming
 
