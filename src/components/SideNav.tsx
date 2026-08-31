@@ -38,6 +38,15 @@ const MapIcon = () => (
     </svg>
 );
 
+const RecipeBookIcon = () => (
+    <svg {...iconProps}>
+        <title>Recipe Book</title>
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
+        <path d="M9 6h7M9 10h5" />
+    </svg>
+);
+
 const StatsIcon = () => (
     <svg {...iconProps}>
         <title>Stats</title>
@@ -61,6 +70,10 @@ export const SideNav = () => (
             <Link href="/stats" className={linkClass}>
                 <StatsIcon />
                 Player Stats
+            </Link>
+            <Link href="/recipes" className={linkClass}>
+                <RecipeBookIcon />
+                Recipe Book
             </Link>
             <Link href="/mods" className={linkClass}>
                 <ModsIcon />

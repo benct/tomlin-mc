@@ -30,6 +30,7 @@ Configure the target server via environment variables in `.env.local`:
 MC_SERVER_ADDRESS=play.yourserver.net    # required — server hostname or IP
 MC_SERVER_PORT=25565                     # optional — Server List Ping (TCP) port, default 25565
 MC_QUERY_PORT=25565                      # optional — Query (UDP) port, default 25565
+MC_VERSION=26.2                          # optional — `npm run build:recipes` only — see below
 MC_STATS_DIR=/server/stats               # optional — player data directory for the stats page
 RESOURCE_PACK_URL=https://.../pack.zip   # optional — direct URL to the client resource pack download
 ```
@@ -57,6 +58,13 @@ query.port=25565
 Without Query, the site still works but falls back to the Server List Ping
 sample, which most servers truncate to a partial player list.
 
+`MC_VERSION` is used only by `npm run build:recipes`; the site itself doesn't
+read it. If not added to `.env.local`, include it when running the script:
+
+```bash
+MC_VERSION=26.3 npm run build:recipes
+```
+
 ## How it works
 
 The Minecraft server is queried directly using two native Minecraft protocols, 
@@ -74,12 +82,7 @@ hand-implemented with no runtime dependencies:
   fail, it returns an `online: false` payload so the UI degrades gracefully.
   The route is marked `dynamic = 'force-dynamic'`; refresh cadence is handled
   client-side by SWR.
-- `src/components/ServerStatus.tsx` — client component using SWR to poll
-  `/api/status` every 30 seconds. Renders an online/offline badge, players,
-  version, gametype, MOTD, server icon, and the live player list.
-- `src/app/page.tsx` — the static page content: server info, performance mods,
-  a live-map link, rules, and recommended client-side mods, shaders, and
-  resource packs.
+- `src/app/page.tsx` — the static page content.
 
 The player stats page is read from disk rather than over the network:
 
@@ -95,6 +98,32 @@ The player stats page is read from disk rather than over the network:
   so the files are re-read at most once every 5 minutes instead of being baked
   in at build time.
 
+The recipe book at `/recipes` is built from a generated, committed dataset:
+
+- `scripts/build-recipes.mjs` — run manually with `npm run build:recipes`. Pulls
+  the vanilla recipe, item-tag and `en_us` language files from
+  [misode/mcmeta](https://github.com/misode/mcmeta) via jsDelivr (pinned to a
+  release tag), keeps the recipe types that can actually be drawn
+  (crafting, the furnace family, stonecutting, smithing transforms), resolves
+  item tags to concrete items, and writes `public/recipes.json`. It also asks
+  minecraft.wiki's API for the real filename of every item sprite, because
+  around a hundred of them redirect to a differently-named file (animated
+  `.gif`s, one shared sprite for all the waxed copper variants) that would 404
+  if the URL were derived from the item name alone. Set `MC_VERSION` when the
+  server updates.
+  Crafting grids are stored with their trailing empty slots dropped and padded
+  back out by `craftingGrid`, which keeps ~4100 `""` entries out of the file.
+- `src/lib/recipes.ts` — types and pure helpers: expanding a tag reference like
+  `#planks` to its items, padding a stored grid back to 3x3, deriving sprite and
+  minecraft.wiki URLs, collapsing the flat recipe list into one entry per
+  resulting item, and ranked search
+  (exact name beats prefix beats substring, with ingredient matches last so
+  "redstone" lists redstone items before everything built from it).
+- `src/app/recipes/page.tsx` — the page shell and source attribution. Note that
+  the page lives at `/recipes` while its dataset is served from
+  `/recipes.json`; the two paths don't collide because the static file keeps
+  its extension.
+
 ## Theming
 
 - `src/components/ThemeToggle.tsx` — a floating button that cycles
@@ -108,9 +137,10 @@ The player stats page is read from disk rather than over the network:
 
 ## Scripts
 
-| Command         | Description                                        |
-| --------------- | -------------------------------------------------- |
-| `npm run dev`   | Start the dev server                               |
-| `npm run build` | Production build                                    |
-| `npm run start` | Serve the production build                          |
-| `npm run lint`  | Lint and format with Biome (`biome check --write`) |
+| Command                 | Description                                                     |
+| ----------------------- | --------------------------------------------------------------- |
+| `npm run dev`           | Start the dev server                                            |
+| `npm run build`         | Production build                                                 |
+| `npm run start`         | Serve the production build                                       |
+| `npm run lint`          | Lint and format with Biome (`biome check --write`)              |
+| `npm run build:recipes` | Regenerate `public/recipes.json` for the recipe book (needs network) |
