@@ -1,6 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
+import { CopyField } from '@/components/CopyField';
 import type { ServerStatus } from '@/lib/types';
 
 const fetcher = (url: string) =>
@@ -22,7 +23,7 @@ const Badge = ({ online }: { online: boolean }) => {
     );
 };
 
-const ServerStatusView = () => {
+const ServerStatusView = ({ connectAddress }: { connectAddress?: string | null }) => {
     const { data, error, isLoading } = useSWR<ServerStatus>('/api/status', fetcher, {
         refreshInterval: 30_000, // poll every 30s
         revalidateOnFocus: true,
@@ -44,10 +45,16 @@ const ServerStatusView = () => {
         <div className="markdown-body">
             <h2>Status</h2>
 
-            <p className="flex items-center gap-3">
+            <div className="mb-4 flex flex-wrap items-center gap-3">
                 <Badge online={data.online} />
-                <code>{data.hostname}</code>
-            </p>
+                {connectAddress ? (
+                    <div className="min-w-0 max-w-64 flex-1">
+                        <CopyField content={connectAddress} />
+                    </div>
+                ) : (
+                    <code>{data.hostname}</code>
+                )}
+            </div>
 
             <table>
                 <tbody>

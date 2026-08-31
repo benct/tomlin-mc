@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { StatLeaderboard } from '@/components/StatLeaderboard';
 import { StatTile } from '@/components/StatTile';
 import { formatCount, formatDuration } from '@/lib/formatStats';
@@ -14,19 +13,12 @@ export const metadata: Metadata = {
 // once every 5 minutes rather than baking the numbers in at build time.
 export const revalidate = 300;
 
-const BackLink = () => (
-    <p>
-        <Link href="/">← Back to home</Link>
-    </p>
-);
-
 const Stats = async () => {
     const statistics = await loadStats();
 
     if (!statistics) {
         return (
             <div className="markdown-body">
-                <BackLink />
                 <h1>Player Stats</h1>
                 <p className="text-(--color-fg-muted)">
                     Player stats aren't configured — set <code>MC_STATS_DIR</code> to the server's player data directory.
@@ -40,7 +32,6 @@ const Stats = async () => {
     if (players.length === 0) {
         return (
             <div className="markdown-body">
-                <BackLink />
                 <h1>Player Stats</h1>
                 <p className="text-(--color-fg-muted)">No player stats yet — they'll appear here once someone has played.</p>
             </div>
@@ -49,7 +40,6 @@ const Stats = async () => {
 
     return (
         <div className="markdown-body">
-            <BackLink />
             <h1>Player Stats</h1>
 
             <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">

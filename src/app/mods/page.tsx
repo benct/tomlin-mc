@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { resourcePackUrl } from '@/lib/env';
 
 const RESOURCE_PACK_CONTENTS =
@@ -20,10 +19,6 @@ export const metadata: Metadata = {
 
 const Mods = () => (
     <div className="markdown-body">
-        <p>
-            <Link href="/">← Back to home</Link>
-        </p>
-
         <h1>Recommended Mods</h1>
         <p>
             The server is vanilla-compatible, so none of these are required — but they make the game run and look far better on the client

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { RecipeBrowser } from '@/components/RecipeBrowser';
 
 export const metadata: Metadata = {
@@ -9,10 +8,6 @@ export const metadata: Metadata = {
 
 const RecipeBook = () => (
     <div className="markdown-body">
-        <p>
-            <Link href="/">← Back to home</Link>
-        </p>
-
         <h1>Recipe Book</h1>
         <p>
             A recipe book for vanilla Minecraft — search for any item to see how it's crafted, smelted, cut or smithed. Slots that accept a

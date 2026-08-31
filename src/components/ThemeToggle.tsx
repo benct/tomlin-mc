@@ -25,9 +25,10 @@ const applyTheme = (theme: Theme) => {
 
 const Icon = ({ theme }: { theme: Theme }) => {
     const common = {
-        width: 20,
-        height: 20,
+        width: 16,
+        height: 16,
         viewBox: '0 0 24 24',
+        className: 'size-5 shrink-0 sm:size-4',
         fill: 'none',
         stroke: 'currentColor',
         strokeWidth: 1.75,
@@ -52,13 +53,14 @@ const Icon = ({ theme }: { theme: Theme }) => {
     }
     return (
         <svg {...common} aria-label="System">
-            <rect x="2" y="4" width="20" height="13" rx="2" />
-            <path d="M8 21h8m-4-4v4" />
+            <circle cx="12" cy="12" r="5" />
+            <path d="M12 7a5 5 0 0 1 0 10Z" fill="currentColor" stroke="none" />
+            <path d="M12 1.5v2m0 17v2M2.5 12h2M5.3 5.3l1.4 1.4m-1.4 12l1.4-1.4" />
         </svg>
     );
 };
 
-export const ThemeToggle = () => {
+export const ThemeToggle = ({ className }: { className: string }) => {
     const [theme, setTheme] = useState<Theme>('system');
     const [mounted, setMounted] = useState(false);
 
@@ -81,9 +83,9 @@ export const ThemeToggle = () => {
             onClick={cycle}
             aria-label={`Switch theme (current: ${LABELS[theme]})`}
             title={LABELS[theme]}
-            className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-(--color-border) bg-(--color-canvas-subtle) text-(--color-fg) transition-colors hover:bg-(--color-neutral-muted)">
+            className={`${className} cursor-pointer`}>
             {/* Render a stable placeholder until mounted to avoid a hydration mismatch. */}
-            {mounted ? <Icon theme={theme} /> : <span className="h-5 w-5" />}
+            {mounted ? <Icon theme={theme} /> : <span className="size-5 sm:size-4" />}
         </button>
     );
 };

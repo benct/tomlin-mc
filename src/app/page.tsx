@@ -1,4 +1,6 @@
+import { ResourcePack } from '@/components/ResourcePack';
 import ServerStatusView from '@/components/ServerStatus';
+import { connectAddress, resourcePackUrl } from '@/lib/env';
 
 const Home = () => (
     <div className="markdown-body">
@@ -36,7 +38,7 @@ const Home = () => (
             </li>
         </ul>
 
-        <ServerStatusView />
+        <ServerStatusView connectAddress={connectAddress} />
 
         <h2>Rules</h2>
         <ul>
@@ -48,6 +50,8 @@ const Home = () => (
         </ul>
 
         <p className="text-sm text-(--color-fg-muted)">Questions? Ask an admin in-game or on discord.</p>
+
+        {resourcePackUrl && <ResourcePack url={resourcePackUrl} />}
     </div>
 );
 

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 
 export const metadata: Metadata = {
     title: '[KOK] Minecraft Server — Page Not Found',
@@ -9,13 +8,7 @@ export const metadata: Metadata = {
 const NotFound = () => (
     <div className="markdown-body">
         <h1>404 — Page Not Found</h1>
-        <p>
-            The page you are looking for doesn&apos;t exist or may have moved. Use the navigation to find your way, or head back to the
-            start.
-        </p>
-        <p>
-            <Link href="/">← Back to home</Link>
-        </p>
+        <p>The page you are looking for doesn&apos;t exist or may have moved. Use the navigation above to find your way.</p>
     </div>
 );
 
