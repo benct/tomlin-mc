@@ -2,6 +2,7 @@
 
 import useSWR from 'swr';
 import { CopyField } from '@/components/CopyField';
+import { StatTile } from '@/components/StatTile';
 import type { ServerStatus } from '@/lib/types';
 
 const fetcher = (url: string) =>
@@ -43,54 +44,32 @@ const ServerStatusView = ({ connectAddress }: { connectAddress?: string | null }
 
     return (
         <div className="markdown-body">
-            <h2>Status</h2>
-
-            <div className="mb-4 flex flex-wrap items-center gap-3">
+            <h2 className="flex flex-wrap items-center gap-3">
+                Status
                 <Badge online={data.online} />
+            </h2>
+
+            <div className="mb-4 flex h-8 items-center gap-3">
+                {data.icon && (
+                    <span className="aspect-square h-8 shrink-0 overflow-hidden rounded">
+                        {/* biome-ignore lint/performance/noImgElement: icon is a base64 data URI, not suited to next/image */}
+                        <img src={data.icon} alt={`${data.hostname} server icon`} width={64} height={64} />
+                    </span>
+                )}
                 {connectAddress ? (
-                    <div className="min-w-0 max-w-64 flex-1">
+                    <div className="min-w-0 max-w-xs flex-1">
                         <CopyField content={connectAddress} />
                     </div>
                 ) : (
-                    <code>{data.hostname}</code>
+                    <code className="self-center">{data.hostname}</code>
                 )}
             </div>
 
-            <table>
-                <tbody>
-                    <tr>
-                        {data.icon && (
-                            <td rowSpan={4} className="align-middle">
-                                {/* biome-ignore lint/performance/noImgElement: icon is a base64 data URI, not suited to next/image */}
-                                <img src={data.icon} alt={`${data.hostname} server icon`} width={64} height={64} className="rounded" />
-                            </td>
-                        )}
-                        <th>Players</th>
-                        <td>{data.online ? `${data.players.online} / ${data.players.max}` : '—'}</td>
-                    </tr>
-                    <tr>
-                        <th>Version</th>
-                        <td>{data.version ?? '—'}</td>
-                    </tr>
-                    <tr>
-                        <th>Gametype</th>
-                        <td>{data.gametype ?? '—'}</td>
-                    </tr>
-                    <tr>
-                        <th>MOTD</th>
-                        <td>
-                            {data.motd.length > 0
-                                ? data.motd.map((line, i) => (
-                                      // biome-ignore lint/suspicious/noArrayIndexKey: MOTD is a fixed, display-only list with no stable id
-                                      <span key={`motd${i}`} className="block">
-                                          {line}
-                                      </span>
-                                  ))
-                                : '—'}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <dl className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <StatTile label="Players" value={data.online ? `${data.players.online} / ${data.players.max}` : '—'} />
+                <StatTile label="Version" value={data.version ?? '—'} />
+                <StatTile label="Gametype" value={data.gametype ?? '—'} />
+            </dl>
 
             {data.online && data.players.list.length > 0 && (
                 <>
