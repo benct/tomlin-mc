@@ -1,6 +1,6 @@
-import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { statsDir } from '@/lib/env';
+import { readJson, readRoster } from '@/lib/serverData';
 import type { Leaderboard, LeaderboardGroup, PlayerStats, ServerStats, StatUnit } from '@/lib/types';
 
 /**
@@ -8,8 +8,7 @@ import type { Leaderboard, LeaderboardGroup, PlayerStats, ServerStats, StatUnit 
  * leaderboards the stats page renders.
  *
  * The server writes one JSON file per player per data type, named by UUID. The
- * roster (`usercache.json`) is the only place UUIDs are mapped back to
- * usernames, so it drives which files we read.
+ * roster from `@/lib/serverData` drives which files we read.
  *
  * Server-only: this module touches the filesystem, so it must only be imported
  * from server components or route handlers.
@@ -23,21 +22,6 @@ const RECIPE_PREFIX = 'minecraft:recipes/';
 
 const NAMESPACE = /^minecraft:/;
 
-/** UUIDs come from a local file, but they become path segments — only accept the canonical form. */
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** A raw entry in the server's user cache — everything is untrusted until validated. */
-interface RawRosterEntry {
-    uuid?: string;
-    name?: string;
-}
-
-/** A roster entry that passed validation: a canonical lowercase UUID and a name. */
-interface RosterPlayer {
-    uuid: string;
-    name: string;
-}
-
 /** A `stats/<uuid>.json` file: category -> stat key -> count. */
 interface RawStatsFile {
     stats?: Record<string, Record<string, number>>;
@@ -45,41 +29,6 @@ interface RawStatsFile {
 
 /** A `advancements/<uuid>.json` file: advancement id -> progress, plus a stray `DataVersion` number. */
 type RawAdvancementsFile = Record<string, { done?: boolean } | number>;
-
-const isMissing = (error: unknown): boolean => (error as NodeJS.ErrnoException)?.code === 'ENOENT';
-
-/**
- * Reads and parses a JSON file, returning `null` when it isn't there. A player
- * who has never joined has no stats file, which is expected rather than an error.
- */
-const readJson = async <T>(file: string): Promise<T | null> => {
-    try {
-        return JSON.parse(await readFile(file, 'utf8')) as T;
-    } catch (error) {
-        if (!isMissing(error)) console.log(`[Error] Reading ${file}: ${String(error)}`);
-        return null;
-    }
-};
-
-/** Reads the roster from the server's stock `usercache.json`. */
-const readRoster = async (dir: string): Promise<RosterPlayer[]> => {
-    const roster = await readJson<RawRosterEntry[]>(join(dir, 'usercache.json'));
-
-    if (!Array.isArray(roster)) {
-        if (roster !== null) console.log(`[Error] Roster in ${dir} is not an array`);
-        return [];
-    }
-
-    // The cache is written most-recently-seen first and can hold stale duplicates
-    // after a name change, so the first entry for a UUID is the current one.
-    const seen = new Set<string>();
-    return roster.flatMap((entry) => {
-        const uuid = entry?.uuid?.toLowerCase();
-        if (!uuid || !entry.name || !UUID_PATTERN.test(uuid) || seen.has(uuid)) return [];
-        seen.add(uuid);
-        return [{ uuid, name: entry.name }];
-    });
-};
 
 const sum = (values: Record<string, number>): number => Object.values(values).reduce((total, value) => total + value, 0);
 

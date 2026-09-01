@@ -42,6 +42,16 @@ export interface ServerStats {
     untracked: string[];
 }
 
+export type ServerEventType = 'join' | 'leave' | 'death' | 'advancement';
+
+export interface ServerEvent {
+    id: string;
+    type: ServerEventType;
+    timestamp: number;
+    player: string;
+    text: string;
+}
+
 export interface ServerStatus {
     hostname: string;
     port: number;

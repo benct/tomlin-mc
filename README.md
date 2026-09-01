@@ -32,6 +32,7 @@ MC_SERVER_PORT=25565                     # optional — Server List Ping (TCP) p
 MC_QUERY_PORT=25565                      # optional — Query (UDP) port, default 25565
 MC_VERSION=26.2                          # optional — `npm run build:recipes` only — see below
 MC_STATS_DIR=/server/stats               # optional — player data directory for the stats page
+MC_LOGS_DIR=/server/logs                 # optional — server log directory for the event feed
 RESOURCE_PACK_URL=https://.../pack.zip   # optional — direct URL to the client resource pack download
 ```
 
@@ -45,6 +46,15 @@ says so. It expects the following layout:
 <MC_STATS_DIR>/usercache.json           # the roster: [{ "uuid": ..., "name": ... }]
 <MC_STATS_DIR>/stats/<uuid>.json        # one stats file per player
 <MC_STATS_DIR>/advancements/<uuid>.json # one advancements file per player
+```
+
+`MC_LOGS_DIR` points at the server's stock `logs` directory and drives the
+activity feed on the stats page. Without it the feed just says so. Nothing
+server-side needs to change — the files are the ones Minecraft already writes:
+
+```
+<MC_LOGS_DIR>/latest.log              # the current run, plain text
+<MC_LOGS_DIR>/<yyyy-mm-dd>-<n>.log.gz # one gzipped file per previous run/day
 ```
 
 To get the full online player list, enable the Query protocol on the server by
@@ -82,10 +92,12 @@ hand-implemented with no runtime dependencies:
   fail, it returns an `online: false` payload so the UI degrades gracefully.
   The route is marked `dynamic = 'force-dynamic'`; refresh cadence is handled
   client-side by SWR.
-- `src/app/page.tsx` — the static page content.
 
 The player stats page is read from disk rather than over the network:
 
+- `src/lib/serverData.ts` — the readers both of the below share: a JSON reader
+  that treats a missing file as expected rather than an error, and the roster
+  from `usercache.json`, the only file mapping UUIDs back to usernames.
 - `src/lib/stats.ts` — reads the roster, then each listed player's stats and
   advancements files, and flattens them into ranked top lists. Playtime is in
   ticks, travel in centimetres, and damage in tenths of a health point, so
@@ -93,10 +105,17 @@ The player stats page is read from disk rather than over the network:
   counts exclude `minecraft:recipes/*`, which the server grants automatically.
   Stats with no scores on the server (e.g. `player_kills` where nobody has
   PvP'd) are dropped rather than shown as an all-zero board.
-- `src/app/stats/page.tsx` — a server component rendering the server-wide
-  totals, the leaderboards, and a per-player table. It sets `revalidate = 300`,
-  so the files are re-read at most once every 5 minutes instead of being baked
-  in at build time.
+
+The activity feed on the same page comes from the server's own logs:
+
+- `src/lib/events.ts` — reads the tail of `latest.log` (and, only if that came up
+  short, the gzipped rotated logs) and matches lines against an **allowlist** of
+  shapes: joins, leaves, deaths and advancements. That allowlist is what keeps
+  errors, mod chatter and startup noise out — an unrecognised line is dropped.
+  Player chat and `issued server command` lines are deliberately never matched,
+  since the page is public and those leak conversations and coordinates. Neither
+  are server broadcasts, bans, kicks, or start/stop — the feed is a record of
+  what players did, not of how the server was run.
 
 The recipe book at `/recipes` is built from a generated, committed dataset:
 

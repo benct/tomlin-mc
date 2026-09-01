@@ -36,5 +36,13 @@ export const connectAddress: string | null = serverAddress
  */
 export const statsDir = process.env.MC_STATS_DIR;
 
+/**
+ * Directory holding the server's log files, or `undefined` when unconfigured.
+ * This is the server's stock `logs/` directory — no extra tooling writes to it:
+ *     <dir>/latest.log              — the current run, plain text
+ *     <dir>/<yyyy-mm-dd>-<n>.log.gz — one gzipped file per previous run/day
+ */
+export const logsDir = process.env.MC_LOGS_DIR;
+
 /** Direct URL to the downloadable client resource pack. */
 export const resourcePackUrl = process.env.RESOURCE_PACK_URL;
