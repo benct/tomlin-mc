@@ -67,10 +67,10 @@ const GitHubIcon = () => (
 
 const NAV_ITEMS = [
     { href: '/', label: 'Home', Icon: HomeIcon },
-    { href: '/map', label: 'Live Map', Icon: MapIcon, external: true },
     { href: '/stats', label: 'Stats', Icon: StatsIcon },
     { href: '/recipes', label: 'Recipe Book', Icon: RecipeBookIcon },
     { href: '/mods', label: 'Mods', Icon: ModsIcon },
+    { href: '/map', label: 'Live Map', Icon: MapIcon, external: true },
 ];
 
 const ITEM_CLASS =
