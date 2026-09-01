@@ -10,6 +10,7 @@ import type { ServerEvent } from '@/lib/types';
 export const metadata: Metadata = {
     title: '[KOK] Minecraft Server — Stats',
     description: 'Player statistics, advancements and activity for the Minecraft server.',
+    robots: { index: false, follow: false },
 };
 
 // The server rewrites the stats files and appends to its logs as players play, so re-read both at most

@@ -90,7 +90,7 @@ export const SiteHeader = () => {
                         const className = `${LINK_CLASS} ${active ? 'bg-(--color-neutral-muted) font-medium text-(--color-fg)!' : ''}`;
 
                         return external ? (
-                            <a key={href} href={href} title={label} className={className}>
+                            <a key={href} href={href} title={label} rel="nofollow" className={className}>
                                 <Icon />
                                 <span className="sr-only sm:not-sr-only">{label}</span>
                             </a>
