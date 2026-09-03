@@ -87,8 +87,8 @@ const Stats = async () => {
 
             <p className="text-sm text-(--color-fg-muted)">
                 Advancement counts exclude recipe unlocks, which the server grants automatically. Damage is shown in health points — two per
-                heart. Recent activity is read from the server's own logs and covers player activity only. Updates at most once every 5
-                minutes.
+                heart. Recent activity is read from the server's own logs and covers player activity only; times are displayed in server
+                time (Europe/Oslo). Updates at most once every 5 minutes.
             </p>
         </div>
     );

@@ -1,5 +1,7 @@
 import type { ServerEvent, ServerEventType } from '@/lib/types';
 
+const DISPLAY_TIMEZONE = 'Europe/Oslo';
+
 /** Dot colour and screen-reader label per event type. */
 const STYLES: Record<ServerEventType, { dot: string; label: string }> = {
     join: { dot: 'bg-(--color-success-fg)', label: 'Joined' },
@@ -8,8 +10,8 @@ const STYLES: Record<ServerEventType, { dot: string; label: string }> = {
     advancement: { dot: 'bg-(--color-accent)', label: 'Advancement' },
 };
 
-const time = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' });
-const day = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+const time = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: DISPLAY_TIMEZONE });
+const day = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: DISPLAY_TIMEZONE });
 
 /** Groups events into consecutive runs sharing a calendar day, preserving order. */
 const byDay = (events: ServerEvent[]): { label: string; events: ServerEvent[] }[] => {

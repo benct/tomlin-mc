@@ -118,15 +118,22 @@ interface Line {
 
 const isMissing = (error: unknown): boolean => (error as NodeJS.ErrnoException)?.code === 'ENOENT';
 
-const partsOf = (date: Date): DateParts => ({ year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() });
+/** The date an instant falls on in UTC, which is what names a log's day. */
+const partsOf = (date: Date): DateParts => ({
+    year: date.getUTCFullYear(),
+    month: date.getUTCMonth() + 1,
+    day: date.getUTCDate(),
+});
 
 /**
- * Builds a timestamp from a date, a whole-day offset and a clock reading. Going
- * through the `Date` constructor rather than adding milliseconds keeps it
- * correct across daylight-saving boundaries.
+ * Builds a timestamp from a date, a whole-day offset and a clock reading.
+ *
+ * The clock is read as UTC because that is what the server writes. Reading
+ * it in the process's zone instead would only be right on a host that also runs
+ * UTC, and would put every event hours out anywhere else.
  */
 const at = ({ year, month, day }: DateParts, offsetDays: number, clock: number): number =>
-    new Date(year, month - 1, day + offsetDays, 0, 0, clock).getTime();
+    Date.UTC(year, month - 1, day + offsetDays, 0, 0, clock);
 
 /** Reads the last `TAIL_BYTES` of a file, along with its mtime. */
 const readTail = async (path: string): Promise<{ text: string; modified: Date } | null> => {
@@ -277,8 +284,8 @@ const readLog = async (dir: string, file: LogFile): Promise<{ timestamp: number;
  * `MC_LOGS_DIR` is unset, so the page can explain itself rather than render an
  * empty shell.
  *
- * Timestamps come from the server's own clock, and the site runs on the same
- * host, so rendering them in the process's local timezone matches the game.
+ * Timestamps are absolute instants, read from the log's UTC clock. Which zone to
+ * *display* them in is the caller's business.
  */
 export const loadEvents = async (limit = DEFAULT_LIMIT): Promise<ServerEvent[] | null> => {
     const dir = logsDir;

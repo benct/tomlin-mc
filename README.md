@@ -112,7 +112,7 @@ The activity feed on the same page comes from the server's own logs:
   short, the gzipped rotated logs) and matches lines against an **allowlist** of
   shapes: joins, leaves, deaths and advancements. That allowlist is what keeps
   errors, mod chatter and startup noise out — an unrecognised line is dropped.
-  Player chat and `issued server command` lines are deliberately never matched,
+  Player chat and issued server command lines are deliberately never matched,
   since the page is public and those leak conversations and coordinates. Neither
   are server broadcasts, bans, kicks, or start/stop — the feed is a record of
   what players did, not of how the server was run.
