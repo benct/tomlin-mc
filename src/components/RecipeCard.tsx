@@ -77,18 +77,16 @@ interface SlotProps {
     options: string[];
     index: number;
     size: number;
-    isResult?: boolean;
 }
 
-const FilledSlot = ({ data, options, index, size, isResult }: SlotProps) => {
+const FilledSlot = ({ data, options, index, size }: SlotProps) => {
     const selectItem = use(SelectItemContext);
     const id = options[index];
     const name = itemName(data, id);
     // Tag slots cycle, so say what else would satisfy the slot rather than listing all of it.
     const alternatives = options.length > 1 ? `1 of ${options.length} options` : null;
-    const searchable = !isResult && selectItem;
 
-    const hint = searchable ? [alternatives, 'click to search'].filter(Boolean).join(' · ') : (alternatives ?? 'Open on minecraft.wiki');
+    const hint = selectItem ? [alternatives, 'click to search'].filter(Boolean).join(' · ') : (alternatives ?? 'Open on minecraft.wiki');
 
     const box = { width: boxSize(size), height: boxSize(size) };
     const tooltip = (
@@ -103,7 +101,7 @@ const FilledSlot = ({ data, options, index, size, isResult }: SlotProps) => {
         </>
     );
 
-    if (searchable) {
+    if (selectItem) {
         return (
             <button
                 type="button"
@@ -131,17 +129,7 @@ const FilledSlot = ({ data, options, index, size, isResult }: SlotProps) => {
 
 const CyclingSlot = (props: Omit<SlotProps, 'index'>) => <FilledSlot {...props} index={useTick() % props.options.length} />;
 
-const Slot = ({
-    data,
-    ingredient,
-    size = 32,
-    isResult,
-}: {
-    data: RecipeData;
-    ingredient: Ingredient;
-    size?: number;
-    isResult?: boolean;
-}) => {
+const Slot = ({ data, ingredient, size = 32 }: { data: RecipeData; ingredient: Ingredient; size?: number }) => {
     const options = resolveIngredient(data, ingredient);
 
     // Empty slots aren't interactive, so drop the hover affordance from SLOT_CLASS.
@@ -153,8 +141,8 @@ const Slot = ({
             />
         );
     }
-    if (options.length === 1) return <FilledSlot data={data} options={options} index={0} size={size} isResult={isResult} />;
-    return <CyclingSlot data={data} options={options} size={size} isResult={isResult} />;
+    if (options.length === 1) return <FilledSlot data={data} options={options} index={0} size={size} />;
+    return <CyclingSlot data={data} options={options} size={size} />;
 };
 
 const Arrow = () => (
@@ -176,7 +164,7 @@ const Arrow = () => (
 
 const ResultSlot = ({ data, recipe }: { data: RecipeData; recipe: Recipe }) => (
     <div className="relative shrink-0">
-        <Slot data={data} ingredient={recipe.result.id} size={40} isResult />
+        <Slot data={data} ingredient={recipe.result.id} size={40} />
         {recipe.result.count > 1 && (
             <span className="pointer-events-none absolute right-0.5 bottom-0 text-sm font-semibold text-(--color-fg) tabular-nums [text-shadow:0_1px_2px_var(--color-canvas)]">
                 {recipe.result.count}
