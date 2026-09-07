@@ -9,7 +9,7 @@ import { adminPassword } from '@/lib/env';
  * HTTP Basic auth, because the thing being protected is a read-only page for one
  * person: there is no account to manage, no session to expire, and it works from
  * a browser and `curl` alike. Any username is accepted — only the password is
- * checked, against `MC_ADMIN_PASSWORD`.
+ * checked, against `ADMIN_PASSWORD`.
  *
  * With that variable unset the page is simply unreachable: this refuses the
  * request and the page returns a 404 of its own, so a deployment that forgot to

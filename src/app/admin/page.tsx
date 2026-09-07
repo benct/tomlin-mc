@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { AdminConfig } from '@/components/AdminConfig';
 import { AdminLogView } from '@/components/AdminLog';
 import { AdminPlayers } from '@/components/AdminPlayers';
 import ServerStatusView from '@/components/ServerStatus';
@@ -46,6 +47,8 @@ const Admin = async ({ searchParams }: { searchParams: Promise<{ [key: string]: 
                     </p>
                 </section>
             )}
+
+            <AdminConfig />
         </div>
     );
 };

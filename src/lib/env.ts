@@ -7,7 +7,7 @@
 
 const DEFAULT_PORT = 25565;
 
-const toPort = (value: string | undefined): number => Number(value ?? DEFAULT_PORT);
+const toPort = (value: string | undefined): number => Number(value) || DEFAULT_PORT;
 
 /** Hostname/IP of the Minecraft server the status routes query. */
 export const serverAddress = process.env.MC_SERVER_ADDRESS;
@@ -44,6 +44,12 @@ export const statsDir = process.env.MC_STATS_DIR;
  */
 export const logsDir = process.env.MC_LOGS_DIR;
 
+/**
+ * The Minecraft version `npm run build:recipes` pulls its data for — a
+ * [mcmeta](https://github.com/misode/mcmeta) release tag, pinned so the build is reproducible.
+ */
+export const mcVersion = process.env.MC_VERSION;
+
 /** Direct URL to the downloadable client resource pack. */
 export const resourcePackUrl = process.env.RESOURCE_PACK_URL;
 
@@ -52,4 +58,19 @@ export const resourcePackUrl = process.env.RESOURCE_PACK_URL;
  * page doesn't exist: `src/proxy.ts` refuses the request and the page itself
  * returns a 404, so there is no way to reach it without one.
  */
-export const adminPassword = process.env.MC_ADMIN_PASSWORD;
+export const adminPassword = process.env.ADMIN_PASSWORD;
+
+/**
+ * The configuration as this module resolved it, for `/admin` to show — the
+ * effective value rather than the raw string, since a port that fell back to the
+ * default is the question an admin is usually trying to answer.
+ */
+export const configuration: { name: string; value: string | null; defaulted?: boolean }[] = [
+    { name: 'MC_SERVER_ADDRESS', value: serverAddress ?? null },
+    { name: 'MC_SERVER_PORT', value: String(serverPort), defaulted: !process.env.MC_SERVER_PORT },
+    { name: 'MC_QUERY_PORT', value: String(queryPort), defaulted: !process.env.MC_QUERY_PORT },
+    { name: 'MC_STATS_DIR', value: statsDir ?? null },
+    { name: 'MC_LOGS_DIR', value: logsDir ?? null },
+    { name: 'MC_VERSION', value: mcVersion ?? null },
+    { name: 'RESOURCE_PACK_URL', value: resourcePackUrl ?? null },
+];
