@@ -13,7 +13,6 @@ export interface LeaderboardEntry {
     uuid: string;
     name: string;
     value: number;
-    /** The value as a fraction (0–1) of the leader's, used for the bar length. */
     share: number;
 }
 
@@ -42,16 +41,6 @@ export interface ServerStats {
     untracked: string[];
 }
 
-export type ServerEventType = 'join' | 'leave' | 'death' | 'advancement';
-
-export interface ServerEvent {
-    id: string;
-    type: ServerEventType;
-    timestamp: number;
-    player: string;
-    text: string;
-}
-
 export interface ServerStatus {
     hostname: string;
     port: number;
@@ -66,4 +55,26 @@ export interface ServerStatus {
         list: string[];
     };
     timestamp: number;
+}
+
+export type LogType = 'advancement' | 'death' | 'chat' | 'server' | 'join' | 'leave' | 'warn' | 'error';
+
+export const LOG_TYPES: readonly LogType[] = ['advancement', 'death', 'chat', 'server', 'join', 'leave', 'warn', 'error'];
+
+export const LOG_FILTERS: readonly { key: string; label: string; types: LogType[] }[] = [
+    { key: 'advancement', label: 'Advancement', types: ['advancement'] },
+    { key: 'death', label: 'Death', types: ['death'] },
+    { key: 'chat', label: 'Chat', types: ['chat'] },
+    { key: 'server', label: 'Server', types: ['server'] },
+    { key: 'connection', label: 'Connection', types: ['join', 'leave'] },
+    { key: 'warn', label: 'Warning', types: ['warn'] },
+    { key: 'error', label: 'Error', types: ['error'] },
+];
+
+export interface LogEntry {
+    id: string;
+    type: LogType;
+    timestamp: number;
+    player?: string;
+    text: string;
 }

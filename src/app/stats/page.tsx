@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import { ServerEventLog } from '@/components/ServerEventLog';
+import { ServerLog } from '@/components/ServerLog';
 import { StatLeaderboard } from '@/components/StatLeaderboard';
 import { StatTile } from '@/components/StatTile';
-import { loadEvents } from '@/lib/events';
 import { formatCount, formatDuration } from '@/lib/formatStats';
+import { readPublicLog } from '@/lib/logs';
 import { loadStats } from '@/lib/stats';
-import type { ServerEvent } from '@/lib/types';
+import type { LogEntry } from '@/lib/types';
 
 export const metadata: Metadata = {
     title: '[KOK] Minecraft Server — Stats',
@@ -17,23 +17,23 @@ export const metadata: Metadata = {
 // once every 5 minutes rather than baking them in at build time.
 export const revalidate = 300;
 
-const Activity = ({ events }: { events: ServerEvent[] | null }) => (
+const Activity = ({ entries }: { entries: LogEntry[] | null }) => (
     <section className="mb-4">
         <h2>Recent Activity</h2>
-        {events === null ? (
+        {entries === null ? (
             <p className="text-(--color-fg-muted)">
                 The event log isn't configured — set <code>MC_LOGS_DIR</code> to the server's <code>logs</code> directory.
             </p>
-        ) : events.length === 0 ? (
+        ) : entries.length === 0 ? (
             <p className="text-(--color-fg-muted)">Nothing has happened on the server recently.</p>
         ) : (
-            <ServerEventLog events={events} />
+            <ServerLog entries={entries} />
         )}
     </section>
 );
 
 const Stats = async () => {
-    const [statistics, events] = await Promise.all([loadStats(), loadEvents()]);
+    const [statistics, entries] = await Promise.all([loadStats(), readPublicLog()]);
 
     if (!statistics) {
         return (
@@ -42,7 +42,7 @@ const Stats = async () => {
                 <p className="text-(--color-fg-muted)">
                     Player stats aren't configured — set <code>MC_STATS_DIR</code> to the server's player data directory.
                 </p>
-                <Activity events={events} />
+                <Activity entries={entries} />
             </div>
         );
     }
@@ -54,7 +54,7 @@ const Stats = async () => {
             <div className="markdown-body">
                 <h1>Player Stats</h1>
                 <p className="text-(--color-fg-muted)">No player stats yet — they'll appear here once someone has played.</p>
-                <Activity events={events} />
+                <Activity entries={entries} />
             </div>
         );
     }
@@ -83,7 +83,7 @@ const Stats = async () => {
                 </section>
             ))}
 
-            <Activity events={events} />
+            <Activity entries={entries} />
 
             <p className="text-sm text-(--color-fg-muted)">
                 Advancement counts exclude recipe unlocks, which the server grants automatically. Damage is shown in health points — two per

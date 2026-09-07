@@ -46,3 +46,10 @@ export const logsDir = process.env.MC_LOGS_DIR;
 
 /** Direct URL to the downloadable client resource pack. */
 export const resourcePackUrl = process.env.RESOURCE_PACK_URL;
+
+/**
+ * Password for `/admin`, which shows the unfiltered server data. Unset means the
+ * page doesn't exist: `src/proxy.ts` refuses the request and the page itself
+ * returns a 404, so there is no way to reach it without one.
+ */
+export const adminPassword = process.env.MC_ADMIN_PASSWORD;

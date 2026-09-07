@@ -15,11 +15,8 @@ const TYPE_STAT = 0x00;
 /** Arbitrary session id; only the low nibble of each byte is significant. */
 const SESSION_ID = 0x01;
 
-/** Parsed subset of a full-stat Query response. */
 /**
- * A full-stat Query response. Every key/value pair the server sends is preserved
- * verbatim in {@link QueryStatus.kv}; the well-known fields below are typed
- * conveniences derived from it. Vanilla servers send: `hostname` (the MOTD),
+ * A full-stat Query response. Vanilla servers send `hostname` (the MOTD),
  * `gametype`, `game_id`, `version`, `plugins`, `map`, `numplayers`, `maxplayers`,
  * `hostport`, and `hostip`.
  */

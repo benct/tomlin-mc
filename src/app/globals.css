@@ -25,6 +25,8 @@
     --color-success-bg: #dafbe1;
     --color-danger-fg: #d1242f;
     --color-danger-bg: #ffebe9;
+    --color-attention-fg: #9a6700;
+    --color-done-fg: #8250df;
     --color-code-bg: #eff1f3;
 }
 
@@ -42,6 +44,8 @@
     --color-success-bg: #12261e;
     --color-danger-fg: #f85149;
     --color-danger-bg: #25171c;
+    --color-attention-fg: #d29922;
+    --color-done-fg: #ab7df8;
     --color-code-bg: #6e768166;
     color-scheme: dark;
 }
@@ -61,6 +65,8 @@
         --color-success-bg: #12261e;
         --color-danger-fg: #f85149;
         --color-danger-bg: #25171c;
+        --color-attention-fg: #d29922;
+        --color-done-fg: #ab7df8;
         --color-code-bg: #6e768166;
     }
 }
