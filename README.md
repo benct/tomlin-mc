@@ -10,7 +10,7 @@ styled like a GitHub-rendered Markdown file with light/dark/system theming.
 - **SWR** for client-side polling of live status
 - **Biome** for linting and formatting
 - Zero third-party status services — the server is queried directly over its
-  native protocols (see [How it works](#how-it-works)).
+  native protocols.
 
 ## Getting started
 
@@ -32,8 +32,9 @@ MC_SERVER_PORT=25565                     # optional — Server List Ping (TCP) p
 MC_QUERY_PORT=25565                      # optional — Query (UDP) port, default 25565
 MC_VERSION=26.2                          # optional — `npm run build:recipes` only — see below
 MC_STATS_DIR=/server/stats               # optional — player data directory for the stats page
-MC_LOGS_DIR=/server/logs                 # optional — server log directory for the event feed
+MC_LOGS_DIR=/server/logs                 # optional — server log directory, for the log on /stats and /admin
 RESOURCE_PACK_URL=https://.../pack.zip   # optional — direct URL to the client resource pack download
+ADMIN_PASSWORD=some-password             # optional — password for /admin; unset means the page doesn't exist
 ```
 
 `MC_SERVER_ADDRESS` is required; if it is unset the status API responds with a
@@ -48,14 +49,18 @@ says so. It expects the following layout:
 <MC_STATS_DIR>/advancements/<uuid>.json # one advancements file per player
 ```
 
-`MC_LOGS_DIR` points at the server's stock `logs` directory and drives the
-activity feed on the stats page. Without it the feed just says so. Nothing
+`MC_LOGS_DIR` points at the server's stock `logs` directory and drives the log
+on both the stats page and `/admin`. Without it, each just says so. Nothing
 server-side needs to change — the files are the ones Minecraft already writes:
 
 ```
 <MC_LOGS_DIR>/latest.log              # the current run, plain text
 <MC_LOGS_DIR>/<yyyy-mm-dd>-<n>.log.gz # one gzipped file per previous run/day
 ```
+
+`ADMIN_PASSWORD` guards `/admin` (see [Admin page](#admin-page)).
+Leave it unset and the page returns a `404` — there is no way to reach it
+without a password.
 
 To get the full online player list, enable the Query protocol on the server by
 setting the following in `server.properties`:
@@ -77,82 +82,35 @@ MC_VERSION=26.3 npm run build:recipes
 
 ## How it works
 
-The Minecraft server is queried directly using two native Minecraft protocols, 
-hand-implemented with no runtime dependencies:
+The `src/lib` modules, and what each is for:
 
-- `src/lib/mcping.ts` — the modern (1.7+) **Server List Ping** protocol over TCP.
-  Provides version, MOTD, player counts, a player sample, and the server icon.
-- `src/lib/mcquery.ts` — the UDP **Query** protocol. Provides the complete online 
-  player list plus gametype, map, and other server metadata.
-  Requires `enable-query=true` server-side.
-- `src/app/api/status/route.ts` — queries both protocols in parallel with
-  `Promise.allSettled` and merges the results into a single `ServerStatus`
-  (`src/lib/types.ts`), preferring Query data where both are present (the player
-  list) and filling in the server icon from SLP (which Query lacks). If both
-  fail, it returns an `online: false` payload so the UI degrades gracefully.
-  The route is marked `dynamic = 'force-dynamic'`; refresh cadence is handled
-  client-side by SWR.
+- `src/lib/env.ts` — the only place `process.env` is read; resolves ports, directories and the admin password.
+- `src/lib/logs.ts` — finds, reads, dates and classifies the server's own log files into typed entries. Masks IP
+  addresses and `§` codes on the way through, and decides which types a public page may see: deaths and advancements only.
+- `src/lib/admin.ts` — assembles what `/admin` shows: the filtered log, per-type counts, and each player's login history.
+- `src/lib/mcping.ts` — Server List Ping over TCP: version, MOTD, player counts, server icon.
+- `src/lib/mcquery.ts` — the UDP Query protocol: the full online player list, gametype and map.
+- `src/lib/serverData.ts` — the on-disk readers both stats and logs share: tolerant JSON, and the `usercache.json` roster.
+- `src/lib/stats.ts` — turns each player's stats and advancements files into the ranked leaderboards.
+- `src/lib/recipes.ts` — pure helpers over the generated recipe dataset: tag expansion, grid padding, sprite URLs,
+  ranked search.
+- `src/lib/formatting.ts` — renders Minecraft's raw counters (ticks, centimetres, tenths of a heart) as something readable.
+- `src/lib/datetime.ts` — formats instants in the server's timezone, with the locale pinned.
 
-The player stats page is read from disk rather than over the network:
+### Admin page
 
-- `src/lib/serverData.ts` — the readers both of the below share: a JSON reader
-  that treats a missing file as expected rather than an error, and the roster
-  from `usercache.json`, the only file mapping UUIDs back to usernames.
-- `src/lib/stats.ts` — reads the roster, then each listed player's stats and
-  advancements files, and flattens them into ranked top lists. Playtime is in
-  ticks, travel in centimetres, and damage in tenths of a health point, so
-  `src/lib/formatStats.ts` converts each to something readable. Advancement
-  counts exclude `minecraft:recipes/*`, which the server grants automatically.
-  Stats with no scores on the server (e.g. `player_kills` where nobody has
-  PvP'd) are dropped rather than shown as an all-zero board.
+`/admin` shows the whole log — every type, not just the two the stats page
+publishes — alongside the player list and the resolved configuration. It is
+unlisted and unindexed, and `src/proxy.ts` gates it with HTTP Basic auth against
+`ADMIN_PASSWORD`; leave that unset and the page 404s instead.
 
-The activity feed on the same page comes from the server's own logs:
+### Recipe book data
 
-- `src/lib/events.ts` — reads the tail of `latest.log` (and, only if that came up
-  short, the gzipped rotated logs) and matches lines against an **allowlist** of
-  shapes: joins, leaves, deaths and advancements. That allowlist is what keeps
-  errors, mod chatter and startup noise out — an unrecognised line is dropped.
-  Player chat and issued server command lines are deliberately never matched,
-  since the page is public and those leak conversations and coordinates. Neither
-  are server broadcasts, bans, kicks, or start/stop — the feed is a record of
-  what players did, not of how the server was run.
-
-The recipe book at `/recipes` is built from a generated, committed dataset:
-
-- `scripts/build-recipes.mjs` — run manually with `npm run build:recipes`. Pulls
-  the vanilla recipe, item-tag and `en_us` language files from
-  [misode/mcmeta](https://github.com/misode/mcmeta) via jsDelivr (pinned to a
-  release tag), keeps the recipe types that can actually be drawn
-  (crafting, the furnace family, stonecutting, smithing transforms), resolves
-  item tags to concrete items, and writes `public/recipes.json`. It also asks
-  minecraft.wiki's API for the real filename of every item sprite, because
-  around a hundred of them redirect to a differently-named file (animated
-  `.gif`s, one shared sprite for all the waxed copper variants) that would 404
-  if the URL were derived from the item name alone. Set `MC_VERSION` when the
-  server updates.
-  Crafting grids are stored with their trailing empty slots dropped and padded
-  back out by `craftingGrid`, which keeps ~4100 `""` entries out of the file.
-- `src/lib/recipes.ts` — types and pure helpers: expanding a tag reference like
-  `#planks` to its items, padding a stored grid back to 3x3, deriving sprite and
-  minecraft.wiki URLs, collapsing the flat recipe list into one entry per
-  resulting item, and ranked search
-  (exact name beats prefix beats substring, with ingredient matches last so
-  "redstone" lists redstone items before everything built from it).
-- `src/app/recipes/page.tsx` — the page shell and source attribution. Note that
-  the page lives at `/recipes` while its dataset is served from
-  `/recipes.json`; the two paths don't collide because the static file keeps
-  its extension.
-
-## Theming
-
-- `src/components/ThemeToggle.tsx` — a floating button that cycles
-  **system → light → dark**, persists the choice to `localStorage`, and reflects
-  it via `data-theme` on `<html>`.
-- `src/app/layout.tsx` — inlines a small pre-paint script that applies the saved
-  theme before first render to avoid a light/dark flash.
-- `src/app/globals.css` — GitHub Primer color tokens and Markdown typography.
-  `system` follows `prefers-color-scheme`; explicit `light`/`dark` are driven by
-  the `data-theme` attribute.
+`npm run build:recipes` pulls vanilla recipe, item-tag and language data from
+[mcmeta](https://github.com/misode/mcmeta) at the `MC_VERSION` tag, resolves tags
+to concrete items, looks up each sprite's real filename, and writes
+`public/recipes.json`. That file is committed and nothing regenerates it — re-run
+the script when the server updates.
 
 ## Scripts
 
