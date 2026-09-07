@@ -13,8 +13,8 @@ import { LOG_FILTERS, type LogEntry, type LogType } from '@/lib/types';
  * Sensitive by construction, with one exception it doesn't get to make: IP
  * addresses are masked in `@/lib/logs`, before this module ever sees a line.
  *
- * Server-only: this module touches the filesystem, so it must only be imported
- * from server components or route handlers.
+ * Server-only: everything here reads from disk, so it must only be imported from
+ * server components or route handlers.
  */
 
 /** How many entries the page renders. The rest are still read — counted, not shown. */

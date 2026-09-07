@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { ServerLog } from '@/components/ServerLog';
 import { StatLeaderboard } from '@/components/StatLeaderboard';
 import { StatTile } from '@/components/StatTile';
-import { formatCount, formatDuration } from '@/lib/formatStats';
+import { formatCount, formatDuration } from '@/lib/formatting';
 import { readPublicLog } from '@/lib/logs';
 import { loadStats } from '@/lib/stats';
 import type { LogEntry } from '@/lib/types';
@@ -22,7 +22,7 @@ const Activity = ({ entries }: { entries: LogEntry[] | null }) => (
         <h2>Recent Activity</h2>
         {entries === null ? (
             <p className="text-(--color-fg-muted)">
-                The event log isn't configured — set <code>MC_LOGS_DIR</code> to the server's <code>logs</code> directory.
+                The server log isn't configured — set <code>MC_LOGS_DIR</code> to the server's <code>logs</code> directory.
             </p>
         ) : entries.length === 0 ? (
             <p className="text-(--color-fg-muted)">Nothing has happened on the server recently.</p>

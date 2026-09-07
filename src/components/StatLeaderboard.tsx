@@ -1,4 +1,4 @@
-import { formatStat } from '@/lib/formatStats';
+import { formatStat } from '@/lib/formatting';
 import type { Leaderboard } from '@/lib/types';
 
 /**

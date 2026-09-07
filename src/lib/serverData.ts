@@ -4,7 +4,7 @@ import { join } from 'node:path';
 /**
  * Shared readers for the Minecraft server's on-disk data files.
  *
- * Both the stats page and the event log start from the same place: the roster
+ * Both the stats leaderboards and the log start from the same place: the roster
  * in `usercache.json`, which is the only file mapping UUIDs back to usernames.
  *
  * Server-only: this module touches the filesystem, so it must only be imported

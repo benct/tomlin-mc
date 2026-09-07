@@ -9,7 +9,7 @@ export const AdminPlayers = ({ players }: { players: AdminPlayer[] }) => (
             <p className="text-(--color-fg-muted)">No players known — neither the roster nor the logs have seen anyone.</p>
         ) : (
             <div className="overflow-x-auto">
-                <table className="table! w-full! overflow-visible! text-sm">
+                <table className="text-sm">
                     <thead>
                         <tr>
                             <th align="left">Player</th>

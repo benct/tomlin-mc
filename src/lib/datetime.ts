@@ -3,20 +3,13 @@
  *
  * Everything the server writes is an absolute instant; these render it in the
  * server's own timezone, which is the one an admin reading a log or a player
- * reading the feed is thinking in. The locale is pinned so server and client
- * agree — a mismatch would show up as a hydration error.
+ * reading the stats page is thinking in. The locale is pinned too, so what you see
+ * doesn't depend on the locale of whatever host is rendering.
  */
 
 export const DISPLAY_TIMEZONE = 'Europe/Oslo';
 
 const clock = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: DISPLAY_TIMEZONE });
-
-const seconds = new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZone: DISPLAY_TIMEZONE,
-});
 
 const day = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: DISPLAY_TIMEZONE });
 
@@ -33,9 +26,6 @@ const relative = new Intl.RelativeTimeFormat('en-GB', { numeric: 'auto' });
 
 /** `14:32` */
 export const formatClock = (timestamp: number): string => clock.format(timestamp);
-
-/** `14:32:18` */
-export const formatSeconds = (timestamp: number): string => seconds.format(timestamp);
 
 /** `Sunday 6 September` */
 export const formatDay = (timestamp: number): string => day.format(timestamp);

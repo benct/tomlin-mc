@@ -4,7 +4,7 @@ import { promisify } from 'node:util';
 import { gunzip } from 'node:zlib';
 import { logsDir, statsDir } from '@/lib/env';
 import { readRoster } from '@/lib/serverData';
-import { LOG_TYPES, type LogEntry, type LogType } from '@/lib/types';
+import { LOG_FILTERS, type LogEntry, type LogType } from '@/lib/types';
 
 /**
  * Reads the Minecraft server's own log files and turns them into the entries
@@ -32,7 +32,7 @@ import { LOG_TYPES, type LogEntry, type LogType } from '@/lib/types';
  * from server components or route handlers.
  */
 
-/* --- Finding and reading the files -------------------------------------- */
+/* --- Constants: finding the files -------------------------------------- */
 
 /**
  * How much of `latest.log` to read. The log is append-only and we only ever
@@ -53,14 +53,13 @@ const LATEST = 'latest.log';
 /** Rotated logs are named for the day they cover, plus a counter for restarts within it. */
 const ROTATED = /^(\d{4})-(\d{2})-(\d{2})-(\d+)\.log\.gz$/;
 
-/* --- Parsing a line ------------------------------------------------------ */
+/* --- Constants: parsing a line ----------------------------------------- */
 
 /**
  * A log line: `[22:14:03] [Server thread/INFO]: Ben joined the game`. Fabric
- * mods add a ` (ModName)` source before the colon, which is captured loosely
- * and folded into the thread.
+ * mods add a ` (ModName)` source before the colon, which nothing reads.
  */
-const LINE = /^\[(\d{2}):(\d{2}):(\d{2})\] \[([^\]]+)\](?: \(([^)]*)\))?: (.*)$/;
+const LINE = /^\[(\d{2}):(\d{2}):(\d{2})\] \[([^\]]+)\](?: \([^)]*\))?: (.*)$/;
 
 /**
  * Addresses as Java writes them — `/1.2.3.4:56078`, `/[::1]:56078` — plus a bare
@@ -81,10 +80,7 @@ const FORMATTING = /§[0-9a-fk-or]/gi;
 /** A stack frame: `\tat net.minecraft…`, or the `... 24 more` that ends a nested trace. */
 const FRAME = /^\s+(?:at\s|\.{3}\s\d+\smore)/;
 
-/** What a line's level is called when the log didn't say. */
-const UNKNOWN_LEVEL = 'UNKNOWN';
-
-/* --- Working out what a line means --------------------------------------- */
+/* --- Constants: what a line means -------------------------------------- */
 
 /** How many entries the public view shows. */
 const PUBLIC_LIMIT = 50;
@@ -92,8 +88,8 @@ const PUBLIC_LIMIT = 50;
 /** The only types a public page may show. */
 const PUBLIC: ReadonlySet<LogType> = new Set<LogType>(['death', 'advancement']);
 
-/** Everything, for the admin view. */
-const ALL: ReadonlySet<LogType> = new Set(LOG_TYPES);
+/** Everything, for the admin view. Taken from the filters so the two can't disagree. */
+const ALL: ReadonlySet<LogType> = new Set(LOG_FILTERS.flatMap((filter) => filter.types));
 
 /** How much of a warning or error to keep. They can run long; the gist is on the front. */
 const MAX_TEXT = 240;
@@ -171,7 +167,7 @@ const LEVELS: Record<string, LogType> = { WARN: 'warn', ERROR: 'error', FATAL: '
 
 const gunzipAsync = promisify(gunzip);
 
-/* --- Internal shapes ----------------------------------------------------- */
+/* --- Internal shapes --------------------------------------------------- */
 
 /** A calendar date, as the log filenames and `mtime` give it to us. */
 interface DateParts {
@@ -191,7 +187,6 @@ interface Line {
     /** Seconds since midnight — log lines carry a clock but no date. */
     clock: number;
     level: string;
-    thread: string;
     message: string;
 }
 
@@ -203,7 +198,7 @@ interface DatedLine extends Omit<Line, 'clock'> {
 /** A classified line, before it has been given an id. */
 type Classified = Omit<LogEntry, 'id'>;
 
-/* --- Reading -------------------------------------------------------------- */
+/* --- Finding and reading the files ------------------------------------- */
 
 const isMissing = (error: unknown): boolean => (error as NodeJS.ErrnoException)?.code === 'ENOENT';
 
@@ -294,7 +289,7 @@ const listLogs = async (dir: string): Promise<LogFile[]> => {
     return [...(names.includes(LATEST) ? [{ name: LATEST, date: null }] : []), ...rotated];
 };
 
-/* --- Parsing -------------------------------------------------------------- */
+/* --- Parsing ----------------------------------------------------------- */
 
 /**
  * Splits a log into one entry per line.
@@ -322,14 +317,13 @@ const parseLines = (text: string): Line[] => {
             continue;
         }
 
-        const [, hours, minutes, seconds, source, mod, message] = match;
-        // `Server thread/INFO` — the level is the last segment, the rest names the writer.
-        const split = source.lastIndexOf('/');
+        const [, hours, minutes, seconds, source, message] = match;
 
         lines.push({
             clock: Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds),
-            level: split === -1 ? UNKNOWN_LEVEL : source.slice(split + 1),
-            thread: [split === -1 ? source : source.slice(0, split), mod].filter(Boolean).join(' '),
+            // `Server thread/INFO` — the level is the last segment. A bracket with
+            // no level at all yields the whole thing, which matches nothing below.
+            level: source.slice(source.lastIndexOf('/') + 1),
             message: clean(message),
         });
         folded = false;
@@ -378,7 +372,7 @@ const readLogFile = async (dir: string, file: LogFile): Promise<DatedLine[]> => 
     return tail ? dateLines(parseLines(tail.text), partsOf(tail.modified), 'last') : [];
 };
 
-/* --- Classifying ---------------------------------------------------------- */
+/* --- Classifying ------------------------------------------------------- */
 
 /**
  * Flattens a warning or error into one line and trims it. Parsing has already
@@ -440,11 +434,12 @@ const classify = (lines: DatedLine[], roster: readonly string[], wanted: Readonl
     });
 };
 
-/* --- Reading the whole thing ---------------------------------------------- */
+/* --- The readers ------------------------------------------------------- */
 
 /**
- * Reads entries of the wanted types, most recent first. With no `limit` every log
- * file on disk is read; with one, files are opened only until it is met.
+ * Reads entries of the wanted types, most recent first. With no `limit` every
+ * file `listLogs` offers is read; with one, files are opened only until it is
+ * met. Either way `MAX_ROTATED` is the floor on how far back this can see.
  *
  * Timestamps are absolute instants, read from the log's UTC clock. Which zone to
  * *display* them in is the caller's business.
@@ -480,8 +475,8 @@ const read = async (wanted: ReadonlySet<LogType>, limit?: number): Promise<{ ent
 export const readPublicLog = async (limit = PUBLIC_LIMIT): Promise<LogEntry[] | null> => (await read(PUBLIC, limit))?.entries ?? null;
 
 /**
- * The admin view: every type, back through every log file kept on disk. Reading
+ * The admin view: every type, back through every file `listLogs` offers. Reading
  * the lot is what lets the page count each type and date each player's last
- * login; there are only a few hundred entries behind a few thousand lines.
+ * login, and it stays cheap because entries are a small fraction of the lines.
  */
 export const readFullLog = async () => read(ALL);

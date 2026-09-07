@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { queryPort, serverAddress, serverPort } from '@/lib/env';
-import { flattenMotd } from '@/lib/flattenMotd';
 import { pingServer } from '@/lib/mcping';
 import { queryServer } from '@/lib/mcquery';
 import type { ServerStatus } from '@/lib/types';
@@ -14,6 +13,26 @@ import type { ServerStatus } from '@/lib/types';
 
 // Don't cache at the framework level; SWR handles client-side refresh cadence.
 export const dynamic = 'force-dynamic';
+
+// Flatten a chat-component MOTD (or legacy string) into plain text lines.
+export const flattenMotd = (description: unknown): string[] => {
+    const collect = (node: unknown): string => {
+        if (node == null) return '';
+        if (typeof node === 'string') return node;
+        if (Array.isArray(node)) return node.map(collect).join('');
+        if (typeof node === 'object') {
+            const obj = node as { text?: string; extra?: unknown };
+            return (obj.text ?? '') + (obj.extra ? collect(obj.extra) : '');
+        }
+        return '';
+    };
+    // Strip Minecraft "§x" color/format codes, then split into lines.
+    return collect(description)
+        .replace(/§[0-9a-fk-or]/gi, '')
+        .split('\n')
+        .map((line) => line.trimEnd())
+        .filter((line) => line.length > 0);
+};
 
 const settled = <T>(result: PromiseSettledResult<T>): T | null => (result.status === 'fulfilled' ? result.value : null);
 

@@ -59,8 +59,6 @@ export interface ServerStatus {
 
 export type LogType = 'advancement' | 'death' | 'chat' | 'server' | 'join' | 'leave' | 'warn' | 'error';
 
-export const LOG_TYPES: readonly LogType[] = ['advancement', 'death', 'chat', 'server', 'join', 'leave', 'warn', 'error'];
-
 export const LOG_FILTERS: readonly { key: string; label: string; types: LogType[] }[] = [
     { key: 'advancement', label: 'Advancement', types: ['advancement'] },
     { key: 'death', label: 'Death', types: ['death'] },
