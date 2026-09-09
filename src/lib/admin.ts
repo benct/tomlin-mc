@@ -32,15 +32,12 @@ const DEFAULT_FILTERS = LOG_FILTERS.filter((filter) => !QUIET.has(filter.key)).m
 /** The types each filter key covers. An unknown key covers none, so it matches nothing. */
 const TYPES_BY_KEY = new Map(LOG_FILTERS.map((filter) => [filter.key, filter.types]));
 
-/** What the logs say about one player, whether or not they're on the roster. */
+/** One rostered player, and when the logs last saw them arrive. */
 export interface AdminPlayer {
     name: string;
-    /** From the roster; `null` for a player seen in the logs but no longer cached. */
-    uuid: string | null;
+    uuid: string;
     /** The most recent join in the logs, or `null` if they last played before the oldest one. */
     lastLogin: number | null;
-    /** Joins counted across those same logs. */
-    logins: number;
 }
 
 export interface AdminLog {
@@ -61,58 +58,41 @@ export interface AdminLog {
 export interface AdminSnapshot {
     /** `null` when `MC_LOGS_DIR` is unset. */
     log: AdminLog | null;
-    /** Everyone the roster or the logs know about, most recently active first. */
+    /** Everyone in the roster, most recently seen first. */
     players: AdminPlayer[];
 }
 
-/** A player's login history, as far back as the logs go. */
-interface Logins {
-    last: number;
-    count: number;
-}
-
 /**
- * Counts logins per player. Entries arrive newest first, so the first login seen
- * for a name is the latest.
+ * When each player last arrived. Entries come newest first, so the first join
+ * seen for a name is their latest and the rest can be skipped.
  */
-const tallyLogins = (entries: readonly LogEntry[]): Map<string, Logins> => {
-    const logins = new Map<string, Logins>();
+const lastLogins = (entries: readonly LogEntry[]): Map<string, number> => {
+    const logins = new Map<string, number>();
 
     for (const entry of entries) {
-        if (entry.type !== 'join' || !entry.player) continue;
-
-        const seen = logins.get(entry.player);
-        if (seen) seen.count += 1;
-        else logins.set(entry.player, { last: entry.timestamp, count: 1 });
+        if (entry.type === 'join' && entry.player && !logins.has(entry.player)) {
+            logins.set(entry.player, entry.timestamp);
+        }
     }
 
     return logins;
 };
 
 /**
- * Merges the roster with what the logs saw, so a player missing from either
- * still appears. `usercache.json` says who exists; only the logs say when they
- * were last here — its `expiresOn` is stamped when a profile is first cached and
- * isn't refreshed on later logins, so it dates a player's first visit, not their
- * most recent one.
+ * The roster decides who is listed; the logs only date them. A name the logs saw
+ * but `usercache.json` no longer holds is left out — it has expired from the
+ * cache or been renamed, and there is nothing to show about it beyond the name.
+ *
+ * The cache can't supply the date itself: its `expiresOn` is stamped when a
+ * profile is first cached and isn't refreshed on later logins, so it dates a
+ * player's first visit rather than their most recent.
  */
-const buildPlayers = async (logins: Map<string, Logins>): Promise<AdminPlayer[]> => {
+const buildPlayers = async (logins: Map<string, number>): Promise<AdminPlayer[]> => {
     const roster = statsDir ? await readRoster(statsDir) : [];
 
-    const known = roster.map(({ uuid, name }) => ({
-        name,
-        uuid,
-        lastLogin: logins.get(name)?.last ?? null,
-        logins: logins.get(name)?.count ?? 0,
-    }));
-
-    // A name the logs saw but the roster no longer caches: renamed, or expired out.
-    const rostered = new Set(roster.map((player) => player.name));
-    const extra = [...logins]
-        .filter(([name]) => !rostered.has(name))
-        .map(([name, seen]) => ({ name, uuid: null, lastLogin: seen.last, logins: seen.count }));
-
-    return [...known, ...extra].sort((a, b) => (b.lastLogin ?? 0) - (a.lastLogin ?? 0));
+    return roster
+        .map(({ uuid, name }) => ({ name, uuid, lastLogin: logins.get(name) ?? null }))
+        .sort((a, b) => (b.lastLogin ?? 0) - (a.lastLogin ?? 0));
 };
 
 /**
@@ -126,7 +106,7 @@ const buildPlayers = async (logins: Map<string, Logins>): Promise<AdminPlayer[]>
  */
 export const loadAdminSnapshot = async (keys: string[] = []): Promise<AdminSnapshot> => {
     const read = await readFullLog();
-    const players = await buildPlayers(tallyLogins(read?.entries ?? []));
+    const players = await buildPlayers(lastLogins(read?.entries ?? []));
 
     if (!read) return { log: null, players };
 

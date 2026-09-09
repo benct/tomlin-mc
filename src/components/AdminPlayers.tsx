@@ -6,7 +6,7 @@ export const AdminPlayers = ({ players }: { players: AdminPlayer[] }) => (
         <h2>Players</h2>
 
         {players.length === 0 ? (
-            <p className="text-(--color-fg-muted)">No players known — neither the roster nor the logs have seen anyone.</p>
+            <p className="text-(--color-fg-muted)">No players known — the roster is empty or unreadable.</p>
         ) : (
             <div className="overflow-x-auto">
                 <table className="text-sm">
@@ -14,15 +14,14 @@ export const AdminPlayers = ({ players }: { players: AdminPlayer[] }) => (
                         <tr>
                             <th align="left">Player</th>
                             <th align="left">Last login</th>
-                            <th align="right">Logins</th>
                         </tr>
                     </thead>
                     <tbody>
                         {players.map((player) => (
-                            <tr key={player.uuid ?? player.name}>
+                            <tr key={player.uuid}>
                                 <td>
                                     <span className="font-semibold">{player.name}</span>
-                                    <code className="block text-[11px] text-(--color-fg-muted)">{player.uuid ?? 'not in roster'}</code>
+                                    <code className="block text-[11px] text-(--color-fg-muted)">{player.uuid}</code>
                                 </td>
                                 <td>
                                     {player.lastLogin === null ? (
@@ -35,9 +34,6 @@ export const AdminPlayers = ({ players }: { players: AdminPlayer[] }) => (
                                             <span className="block text-xs text-(--color-fg-muted)">{formatAgo(player.lastLogin)}</span>
                                         </>
                                     )}
-                                </td>
-                                <td align="right" className="tabular-nums">
-                                    {player.logins || '—'}
                                 </td>
                             </tr>
                         ))}
