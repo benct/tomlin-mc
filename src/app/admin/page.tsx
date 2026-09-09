@@ -3,10 +3,10 @@ import { notFound } from 'next/navigation';
 import { AdminConfig } from '@/components/AdminConfig';
 import { AdminLogView } from '@/components/AdminLog';
 import { AdminPlayers } from '@/components/AdminPlayers';
-import ServerStatusView from '@/components/ServerStatus';
+import { AdminStatus } from '@/components/AdminStatus';
 import { loadAdminSnapshot } from '@/lib/admin';
 import { DISPLAY_TIMEZONE } from '@/lib/datetime';
-import { adminPassword, connectAddress } from '@/lib/env';
+import { adminPassword } from '@/lib/env';
 
 export const metadata: Metadata = {
     title: 'Admin',
@@ -33,7 +33,7 @@ const Admin = async ({ searchParams }: { searchParams: Promise<{ [key: string]: 
             <h1>Admin</h1>
             <p className="text-(--color-fg-muted)">Server info and administration. Times are shown in server time ({DISPLAY_TIMEZONE}).</p>
 
-            <ServerStatusView connectAddress={connectAddress} />
+            <AdminStatus />
 
             <AdminPlayers players={players} />
 

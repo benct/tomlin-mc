@@ -1,17 +1,10 @@
 'use client';
 
-import useSWR from 'swr';
 import { CopyField } from '@/components/CopyField';
 import { StatTile } from '@/components/StatTile';
-import type { ServerStatus } from '@/lib/types';
+import { useServerStatus } from '@/lib/serverStatus';
 
-const fetcher = (url: string) =>
-    fetch(url).then((r) => {
-        if (!r.ok) throw new Error(`Request failed: ${r.status}`);
-        return r.json() as Promise<ServerStatus>;
-    });
-
-const Badge = ({ online }: { online: boolean }) => {
+export const StatusBadge = ({ online }: { online: boolean }) => {
     const color = online
         ? 'text-[var(--color-success-fg)] bg-[var(--color-success-bg)]'
         : 'text-[var(--color-danger-fg)] bg-[var(--color-danger-bg)]';
@@ -25,19 +18,14 @@ const Badge = ({ online }: { online: boolean }) => {
 };
 
 const ServerStatusView = ({ connectAddress }: { connectAddress?: string | null }) => {
-    const { data, error, isLoading } = useSWR<ServerStatus>('/api/status', fetcher, {
-        refreshInterval: 30_000, // poll every 30s
-        revalidateOnFocus: true,
-    });
+    const { data, error, isLoading } = useServerStatus();
 
     if (isLoading && !data) {
         return <p className="text-(--color-fg-muted)">Loading server status…</p>;
     }
-
     if (error && !data) {
         return <p className="text-(--color-danger-fg)">Failed to load server status. Please try again later.</p>;
     }
-
     if (!data) return null;
 
     const updated = new Date(data.timestamp).toLocaleTimeString();
@@ -46,7 +34,7 @@ const ServerStatusView = ({ connectAddress }: { connectAddress?: string | null }
         <div className="markdown-body">
             <h2 className="flex flex-wrap items-center gap-3">
                 Status
-                <Badge online={data.online} />
+                <StatusBadge online={data.online} />
             </h2>
 
             <div className="mb-4 flex h-8 items-center gap-3">

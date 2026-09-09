@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { queryPort, serverAddress, serverPort } from '@/lib/env';
 import { pingServer } from '@/lib/mcping';
 import { queryServer } from '@/lib/mcquery';
-import type { ServerStatus } from '@/lib/types';
+import type { ServerStatus } from '@/lib/serverStatus';
 
 /**
  * Base status route. Queries the live server via BOTH the SLP (TCP) and Query

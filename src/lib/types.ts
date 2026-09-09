@@ -41,22 +41,6 @@ export interface ServerStats {
     untracked: string[];
 }
 
-export interface ServerStatus {
-    hostname: string;
-    port: number;
-    online: boolean;
-    version: string | null;
-    gametype: string | null;
-    motd: string[];
-    icon: string | null;
-    players: {
-        online: number;
-        max: number;
-        list: string[];
-    };
-    timestamp: number;
-}
-
 export type LogType = 'advancement' | 'death' | 'chat' | 'server' | 'join' | 'leave' | 'warn' | 'error';
 
 export const LOG_FILTERS: readonly { key: string; label: string; types: LogType[] }[] = [
