@@ -41,9 +41,9 @@ const StatsIcon = () => (
     </svg>
 );
 
-const RecipeBookIcon = () => (
+const WikiIcon = () => (
     <svg {...iconProps}>
-        <title>Recipe Book</title>
+        <title>Wiki</title>
         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
         <path d="M9 6h7M9 10h5" />
@@ -68,7 +68,7 @@ const GitHubIcon = () => (
 const NAV_ITEMS = [
     { href: '/', label: 'Home', Icon: HomeIcon },
     { href: '/stats', label: 'Stats', Icon: StatsIcon },
-    { href: '/recipes', label: 'Recipe Book', Icon: RecipeBookIcon },
+    { href: '/wiki', label: 'Wiki', Icon: WikiIcon },
     { href: '/mods', label: 'Mods', Icon: ModsIcon },
     { href: '/map', label: 'Live Map', Icon: MapIcon, external: true },
 ];

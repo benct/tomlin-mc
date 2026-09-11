@@ -106,21 +106,6 @@ export const RecipeBrowser = () => {
                             Show more
                         </button>
                     )}
-                    <p className="my-6 text-sm text-(--color-fg-muted)">
-                        Recipe data extracted from Minecraft {data.version} by{' '}
-                        <a href="https://github.com/misode/mcmeta" target="_blank" rel="noopener noreferrer">
-                            mcmeta
-                        </a>
-                        . Item sprites from{' '}
-                        <a href="https://minecraft.wiki/" target="_blank" rel="noopener noreferrer">
-                            minecraft.wiki
-                        </a>
-                        , used under{' '}
-                        <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank" rel="noopener noreferrer">
-                            CC BY-NC-SA 3.0
-                        </a>
-                        .
-                    </p>
                 </>
             )}
         </div>
