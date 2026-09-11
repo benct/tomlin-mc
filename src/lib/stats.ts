@@ -1,6 +1,5 @@
-import { join } from 'node:path';
 import { statsDir } from '@/lib/env';
-import { readJson, readRoster } from '@/lib/serverData';
+import { type RawAdvancementsFile, type RawStatsFile, readPlayerAdvancements, readPlayerStats, readRoster } from '@/lib/serverData';
 import type { Leaderboard, LeaderboardGroup, PlayerStats, ServerStats, StatUnit } from '@/lib/types';
 
 /**
@@ -21,14 +20,6 @@ const TOP_N = 5;
 const RECIPE_PREFIX = 'minecraft:recipes/';
 
 const NAMESPACE = /^minecraft:/;
-
-/** A `stats/<uuid>.json` file: category -> stat key -> count. */
-interface RawStatsFile {
-    stats?: Record<string, Record<string, number>>;
-}
-
-/** A `advancements/<uuid>.json` file: advancement id -> progress, plus a stray `DataVersion` number. */
-type RawAdvancementsFile = Record<string, { done?: boolean } | number>;
 
 const sum = (values: Record<string, number>): number => Object.values(values).reduce((total, value) => total + value, 0);
 
@@ -96,7 +87,7 @@ const leaderboards: { title: string; metrics: Metric[] }[] = [
     {
         title: 'General',
         metrics: [
-            customMetric('played', 'Time played', 'play_time', 'duration'),
+            customMetric('played', 'Time played', 'play_time', 'playtime'),
             customMetric('jumps', 'Jumps', 'jump'),
             { id: 'advancements', label: 'Advancements earned', unit: 'count', of: (player) => player.advancements },
             { id: 'recipes', label: 'Recipes unlocked', unit: 'count', of: (player) => player.recipes },
@@ -173,10 +164,7 @@ export const loadStats = async (): Promise<ServerStats | null> => {
 
     const loaded = await Promise.all(
         roster.map(async ({ uuid, name }) => {
-            const [stats, advancements] = await Promise.all([
-                readJson<RawStatsFile>(join(dir, 'stats', `${uuid}.json`)),
-                readJson<RawAdvancementsFile>(join(dir, 'advancements', `${uuid}.json`)),
-            ]);
+            const [stats, advancements] = await Promise.all([readPlayerStats(dir, uuid), readPlayerAdvancements(dir, uuid)]);
 
             // No stats file means the player is on the roster but has never played.
             return stats ? buildPlayer(uuid, name, stats, advancements) : { name };

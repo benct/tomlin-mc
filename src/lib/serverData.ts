@@ -26,6 +26,20 @@ export interface RosterPlayer {
     name: string;
 }
 
+/** A `stats/<uuid>.json` file: category -> stat key -> count. */
+export interface RawStatsFile {
+    stats?: Record<string, Record<string, number>>;
+}
+
+/** One advancement's progress: when each criterion was met, and whether that finished it. */
+export interface RawAdvancement {
+    criteria?: Record<string, string>;
+    done?: boolean;
+}
+
+/** An `advancements/<uuid>.json` file: advancement id -> progress, plus a stray `DataVersion` number. */
+export type RawAdvancementsFile = Record<string, RawAdvancement | number>;
+
 const isMissing = (error: unknown): boolean => (error as NodeJS.ErrnoException)?.code === 'ENOENT';
 
 /**
@@ -40,6 +54,14 @@ export const readJson = async <T>(file: string): Promise<T | null> => {
         return null;
     }
 };
+
+/** Reads one player's `stats/<uuid>.json`. Absent until the player has actually played. */
+export const readPlayerStats = (dir: string, uuid: string): Promise<RawStatsFile | null> =>
+    readJson<RawStatsFile>(join(dir, 'stats', `${uuid}.json`));
+
+/** Reads one player's `advancements/<uuid>.json`. Only holds what they have made progress on. */
+export const readPlayerAdvancements = (dir: string, uuid: string): Promise<RawAdvancementsFile | null> =>
+    readJson<RawAdvancementsFile>(join(dir, 'advancements', `${uuid}.json`));
 
 /** Reads the roster from the server's stock `usercache.json`. */
 export const readRoster = async (dir: string): Promise<RosterPlayer[]> => {

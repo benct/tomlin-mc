@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { formatStat } from '@/lib/formatting';
 import type { Leaderboard } from '@/lib/types';
 
@@ -27,14 +28,18 @@ export const StatLeaderboard = ({ board }: { board: Leaderboard }) => {
                         <div className="flex items-baseline justify-between gap-3 text-sm">
                             <span className="flex min-w-0 items-baseline gap-2">
                                 <span className="text-xs tabular-nums text-(--color-fg-muted)">{index + 1}</span>
-                                <span className="truncate text-(--color-fg)">{entry.name}</span>
+                                <Link href={`/stats/${entry.name}`} className="truncate text-(--color-fg)!">
+                                    {entry.name}
+                                </Link>
                             </span>
-                            <span className="shrink-0 tabular-nums text-(--color-fg-muted)">{formatStat(entry.value, board.unit)}</span>
+                            <span className="shrink-0 tabular-nums text-(--color-fg-muted)">
+                                {formatStat(entry.value, board.unit, index + 1)}
+                            </span>
                         </div>
                         {showBars && (
-                            <div aria-hidden="true" className="mt-1.5 h-1.5 rounded-r-[4px] bg-(--color-neutral-muted)">
+                            <div aria-hidden="true" className="mt-1.5 h-1.5 rounded-r-sm bg-(--color-neutral-muted)">
                                 <div
-                                    className="h-full rounded-r-[4px] bg-(--color-accent)"
+                                    className="h-full rounded-r-sm bg-(--color-accent)"
                                     style={{ width: `${Math.max(entry.share * 100, MIN_BAR_PERCENT)}%` }}
                                 />
                             </div>

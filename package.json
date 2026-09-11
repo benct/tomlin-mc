@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "biome check --write .",
-    "build:recipes": "node --env-file-if-exists=.env.local scripts/build-recipes.mjs"
+    "build:data": "npm run build:recipes && npm run build:advancements",
+    "build:recipes": "node --env-file-if-exists=.env.local scripts/build-recipes.mjs",
+    "build:advancements": "node --env-file-if-exists=.env.local scripts/build-advancements.mjs"
   },
   "dependencies": {
     "next": "^16.3.2",

@@ -42,8 +42,30 @@ export const formatDistance = (cm: number): string => {
 /** Tenths of a health point as whole health points (two per heart). */
 export const formatHealth = (tenths: number): string => `${decimal.format(Math.round(tenths / HEALTH_SCALE))} HP`;
 
+/**
+ * How much time a player has sunk into the server, by where they place rather
+ * than by the clock. Nobody wants their real number on a public page, and the
+ * ranking is the funnier half of it anyway.
+ */
+const PLAY_TIME_LABELS = [
+    'Send help',
+    'Lives here',
+    'Touch some grass',
+    'Well past a hobby',
+    'Weekends, mostly',
+    'Dabbles',
+    'Barely unpacked',
+];
+
+/** Said of a play time with no ranking to hand. */
+const PLAY_TIME_UNRANKED = 'Best not to ask';
+
+/** The verdict on a play time, given its 1-based place on the board. */
+export const formatPlayTime = (rank?: number): string =>
+    rank && rank > 0 ? (PLAY_TIME_LABELS[rank - 1] ?? PLAY_TIME_LABELS[PLAY_TIME_LABELS.length - 1]) : PLAY_TIME_UNRANKED;
+
 /** Formats a value according to its stat's unit. */
-export const formatStat = (value: number, unit: StatUnit): string => {
+export const formatStat = (value: number, unit: StatUnit, rank?: number): string => {
     switch (unit) {
         case 'duration':
             return formatDuration(value);
@@ -51,6 +73,8 @@ export const formatStat = (value: number, unit: StatUnit): string => {
             return formatDistance(value);
         case 'health':
             return formatHealth(value);
+        case 'playtime':
+            return formatPlayTime(rank);
         default:
             return formatCount(value);
     }

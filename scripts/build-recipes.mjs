@@ -1,43 +1,18 @@
 /**
- * Generates `public/recipes.json` — the dataset behind the /recipes page.
+ * Generates `public/recipes.json` — the dataset behind the recipe book on /wiki.
  *
- * Two upstream sources, both free and keyless:
+ * The upstream sources and the wiki sprite lookup are shared with the other
+ * generators; see `scripts/mcmeta.mjs`.
  *
- *  - misode/mcmeta (via the jsDelivr CDN) for the vanilla recipe, item-tag and
- *    en_us language files. Pinned to a release tag so the output is
- *    reproducible; bump MC_VERSION when the server updates.
- *  - minecraft.wiki's MediaWiki API to resolve the real filename of each item's
- *    "Invicon" inventory sprite. Most are simply `Invicon_<Display_Name>.png`,
- *    but ~100 are redirects to a differently-named file (animated .gif, a
- *    shared sprite for waxed copper variants, …) which would 404 if we
- *    constructed the URL naively. Resolving here keeps runtime dependency-free.
- *
- * Run with `npm run build:recipes`, which loads `.env.local` for MC_VERSION.
- * The generated JSON is committed so that `next build` never needs network
- * access.
+ * Run with `npm run build:data`, which loads `.env.local` for MC_VERSION. The
+ * generated JSON is committed so that `next build` never needs network access.
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CDN, defaultSprite, fetchJson, fetchLang, itemName, MC_VERSION, resolveIcons, run, strip, titleCase } from './mcmeta.mjs';
 
-/**
- * Minecraft version to extract, given as an mcmeta release tag. Required — a
- * stale default would silently regenerate the dataset against the wrong version.
- * `https://cdn.jsdelivr.net/gh/misode/mcmeta@summary/version.json` reports the
- * newest build, and only stable releases get a plain tag like `26.2`.
- */
-const MC_VERSION = process.env.MC_VERSION;
-
-if (!MC_VERSION) {
-    console.log('[Error] MC_VERSION is not set — add it to .env.local, or run `MC_VERSION=26.2 npm run build:recipes`.');
-    console.log('[Error] It takes an mcmeta release tag: https://github.com/misode/mcmeta/tags');
-    process.exit(1);
-}
-
-const CDN = `https://cdn.jsdelivr.net/gh/misode/mcmeta@${MC_VERSION}`;
-const WIKI_API = 'https://minecraft.wiki/api.php';
-const USER_AGENT = 'tomlin-mc-recipe-book/1.0 (https://github.com/benct/tomlin-mc; build script)';
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../public/recipes.json');
 
 /** Recipe types we can render. Everything else (`crafting_special_*`, brewing, smithing_trim, …) is dropped. */
@@ -63,20 +38,6 @@ const ICON_OVERRIDES = {
     flower_banner_pattern: 'ItemSprite_flower-charge-banner-pattern.png',
     skull_banner_pattern: 'ItemSprite_skull-charge-banner-pattern.png',
     mojang_banner_pattern: 'ItemSprite_thing-banner-pattern.png',
-};
-
-const strip = (value) => value.replace(/^(#?)minecraft:/, '$1');
-
-const titleCase = (id) =>
-    id
-        .split('_')
-        .map((word) => word[0].toUpperCase() + word.slice(1))
-        .join(' ');
-
-const fetchJson = async (url) => {
-    const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText} — ${url}`);
-    return res.json();
 };
 
 /**
@@ -179,70 +140,12 @@ const collectIds = (recipes, tags) => {
     return { ids, tags: expanded };
 };
 
-/** Looks up file titles 50 at a time, following redirects, and reports which ones actually hold an image. */
-const queryFiles = async (titles) => {
-    const resolved = {};
-    for (let index = 0; index < titles.length; index += 50) {
-        const batch = titles.slice(index, index + 50);
-        const params = new URLSearchParams({
-            action: 'query',
-            format: 'json',
-            redirects: '1',
-            prop: 'imageinfo',
-            iiprop: 'url',
-            titles: batch.join('|'),
-        });
-        const { query } = await fetchJson(`${WIKI_API}?${params}`);
-
-        // `redirects` maps the title we asked for to the one that actually holds the file.
-        const target = Object.fromEntries((query.redirects ?? []).map(({ from, to }) => [from, to]));
-        const hasFile = Object.fromEntries(Object.values(query.pages).map((page) => [page.title, Boolean(page.imageinfo?.length)]));
-        for (const title of batch) {
-            const final = target[title] ?? title;
-            resolved[title] = hasFile[final] ? final.replace(/^File:/, '').replaceAll(' ', '_') : null;
-        }
-        process.stdout.write(`\r  icons ${Math.min(index + 50, titles.length)}/${titles.length}`);
-    }
-    process.stdout.write('\n');
-    return resolved;
-};
-
-/**
- * Finds the real sprite filename for each display name. Most are simply
- * `Invicon_<Display_Name>.png`, but some redirect elsewhere and a few only
- * exist under the wiki's older `ItemSprite`/`BlockSprite` naming, so fall back
- * through those before giving up.
- */
-const resolveIcons = async (names) => {
-    const kebab = (name) => name.toLowerCase().replaceAll(' ', '-');
-    const resolved = await queryFiles(names.map((name) => `File:Invicon ${name}.png`));
-
-    const icons = {};
-    const unresolved = [];
-    for (const name of names) {
-        const file = resolved[`File:Invicon ${name}.png`];
-        if (file) icons[name] = file;
-        else unresolved.push(name);
-    }
-
-    if (unresolved.length) {
-        const fallbacks = await queryFiles(
-            unresolved.flatMap((name) => [`File:ItemSprite ${kebab(name)}.png`, `File:BlockSprite ${kebab(name)}.png`]),
-        );
-        for (const name of unresolved) {
-            const file = fallbacks[`File:ItemSprite ${kebab(name)}.png`] ?? fallbacks[`File:BlockSprite ${kebab(name)}.png`];
-            if (file) icons[name] = file;
-        }
-    }
-    return icons;
-};
-
 const main = async () => {
     console.log(`Building recipe data for Minecraft ${MC_VERSION}…`);
     const [rawRecipes, rawTags, lang] = await Promise.all([
         fetchJson(`${CDN}-summary/data/recipe/data.min.json`),
         fetchJson(`${CDN}-summary/data/tag/item/data.min.json`),
-        fetchJson(`${CDN}-assets/assets/minecraft/lang/en_us.json`),
+        fetchLang(),
     ]);
 
     const renderable = [...CRAFTING, 'stonecutting', 'smithing_transform', ...Object.keys(COOKING)];
@@ -257,7 +160,7 @@ const main = async () => {
     // "Wheat Crops" as a block, and only the former has a sprite.
     const items = {};
     for (const id of [...ids].sort()) {
-        const name = NAME_OVERRIDES[id] ?? lang[`item.minecraft.${id}`] ?? lang[`block.minecraft.${id}`];
+        const name = NAME_OVERRIDES[id] ?? itemName(lang, id);
         if (!name) throw new Error(`No display name for "${id}"`);
         items[id] = name;
     }
@@ -275,14 +178,13 @@ const main = async () => {
     }
 
     const iconsByName = await resolveIcons([...new Set(Object.values(items))].sort());
-    const defaultFile = (name) => `Invicon_${name.replaceAll(' ', '_')}.png`;
     const icons = {};
     const missing = [];
     for (const [id, name] of Object.entries(items)) {
         const file = ICON_OVERRIDES[id] ?? iconsByName[name];
         if (!file) missing.push(`${id} ("${name}")`);
         // Only carry the exceptions; the app derives the rest from the display name.
-        else if (file !== defaultFile(name)) icons[id] = file;
+        else if (file !== defaultSprite(name)) icons[id] = file;
     }
     if (missing.length) console.log(`  [Warning] no sprite found for ${missing.length} item(s): ${missing.join(', ')}`);
 
@@ -297,10 +199,4 @@ const main = async () => {
     );
 };
 
-await main().catch((error) => {
-    console.log(`[Error] ${error.message}`);
-    if (error.message.includes('cdn.jsdelivr.net')) {
-        console.log(`[Error] Is MC_VERSION="${MC_VERSION}" a real tag? See https://github.com/misode/mcmeta/tags`);
-    }
-    process.exitCode = 1;
-});
+await run(main);

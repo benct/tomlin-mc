@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { ServerLog } from '@/components/ServerLog';
 import { StatLeaderboard } from '@/components/StatLeaderboard';
 import { StatTile } from '@/components/StatTile';
@@ -47,7 +48,7 @@ const Stats = async () => {
         );
     }
 
-    const { players, groups, totals } = statistics;
+    const { players, groups, totals, untracked } = statistics;
 
     if (players.length === 0) {
         return (
@@ -71,6 +72,27 @@ const Stats = async () => {
                 <StatTile label="Deaths" value={formatCount(totals.deaths)} />
                 <StatTile label="Players" value={formatCount(players.length)} />
             </dl>
+
+            <section>
+                <h2>Players</h2>
+                <ul className="grid list-none! gap-2 pl-0! sm:grid-cols-2">
+                    {players.map((player) => (
+                        <li key={player.uuid}>
+                            <Link
+                                href={`/stats/${player.name}`}
+                                className="flex items-baseline justify-between gap-3 rounded-lg border border-(--color-border) bg-(--color-canvas-subtle) px-4 py-2.5 hover:bg-(--color-neutral-muted) hover:no-underline!">
+                                <span className="truncate font-semibold">{player.name}</span>
+                                <span className="shrink-0 text-xs tabular-nums text-(--color-fg-muted)">
+                                    {formatCount(player.advancements)} advancements
+                                </span>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+                {untracked.length > 0 && (
+                    <p className="text-sm text-(--color-fg-muted)">On the roster but yet to play: {untracked.join(', ')}.</p>
+                )}
+            </section>
 
             {groups.map((group) => (
                 <section key={group.title}>

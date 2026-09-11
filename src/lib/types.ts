@@ -1,4 +1,4 @@
-export type StatUnit = 'count' | 'duration' | 'distance' | 'health';
+export type StatUnit = 'count' | 'duration' | 'distance' | 'health' | 'playtime';
 
 export interface PlayerStats {
     uuid: string;
@@ -39,6 +39,75 @@ export interface ServerStats {
         deaths: number;
     };
     untracked: string[];
+}
+
+export type AdvancementFrame = 'task' | 'goal' | 'challenge';
+
+export interface Advancement {
+    id: string;
+    category: string;
+    title: string;
+    description: string;
+    frame: AdvancementFrame;
+    hidden?: boolean;
+    icon?: string;
+    requirements: string[][];
+    steps?: string[];
+}
+
+export interface AdvancementStep {
+    name: string;
+    done: boolean;
+}
+
+export interface PlayerAdvancement extends Omit<Advancement, 'requirements' | 'steps'> {
+    done: boolean;
+    have: number;
+    need: number;
+    completedAt: number | null;
+    checklist: AdvancementStep[];
+}
+
+export interface AdvancementCategory {
+    key: string;
+    title: string;
+    done: number;
+    total: number;
+    entries: PlayerAdvancement[];
+}
+
+export interface AdvancementProgress {
+    done: number;
+    total: number;
+    recipes: number;
+    categories: AdvancementCategory[];
+}
+
+export interface StatRow {
+    key: string;
+    label: string;
+    unit: StatUnit;
+    value: number;
+}
+
+export interface StatSection {
+    title: string;
+    rows: StatRow[];
+}
+
+export interface BreakdownEntry {
+    id: string;
+    name: string;
+    value: number;
+    share: number;
+}
+
+export interface Breakdown {
+    key: string;
+    title: string;
+    note: string;
+    total: number;
+    entries: BreakdownEntry[];
 }
 
 export type LogType = 'advancement' | 'death' | 'chat' | 'server' | 'join' | 'leave' | 'warn' | 'error';
