@@ -9,7 +9,8 @@ import { DISPLAY_TIMEZONE } from '@/lib/datetime';
 import { adminPassword } from '@/lib/env';
 
 export const metadata: Metadata = {
-    title: 'Admin',
+    title: '[KOK] Minecraft Server — Admin',
+    description: 'Status, player roster, the full log and resolved configuration for the Minecraft server.',
     robots: { index: false, follow: false, nocache: true, noarchive: true, nosnippet: true, noimageindex: true },
 };
 
